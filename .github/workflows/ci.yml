@@ -1,0 +1,27 @@
+name: Cinematic TV validation
+on:
+  push:
+    paths:
+      - 'cinematic-tv/**'
+      - '.github/workflows/ci.yml'
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: cinematic-tv
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm run syntax
+      - run: npm test
+      - run: npm run build
+      - uses: actions/upload-artifact@v4
+        with:
+          name: cinematic-tv-unsigned-webapp
+          path: cinematic-tv/dist/
+          if-no-files-found: error
+# This workflow does not sign or publish a .wgt. Keep TV-specific certificates private.

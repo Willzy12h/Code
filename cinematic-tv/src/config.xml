@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<widget xmlns="http://www.w3.org/ns/widgets" xmlns:tizen="http://tizen.org/ns/widgets" id="https://example.org/cinematic-tv/" version="0.3.0" viewmodes="maximized">
+  <name>Cinematic TV</name>
+  <description>Personal ad-free Samsung TV app launcher</description>
+  <icon src="assets/icon.png"/>
+  <content src="index.html"/>
+  <feature name="http://tizen.org/feature/screen.size.normal.1080.1920"/>
+  <tizen:application id="CinemTV001.Launcher" package="CinemTV001" required_version="6.0"/>
+  <tizen:profile name="tv-samsung"/>
+  <tizen:setting screen-orientation="landscape" pointing-device-support="disable" context-menu="disable" background-support="disable" encryption="disable" install-location="auto" hwkey-event="enable"/>
+  <tizen:privilege name="http://tizen.org/privilege/application.info"/>
+  <tizen:privilege name="http://tizen.org/privilege/application.launch"/>
+  <tizen:privilege name="http://tizen.org/privilege/tv.window"/>
+  <tizen:privilege name="http://tizen.org/privilege/filesystem.read"/>
+  <tizen:privilege name="http://tizen.org/privilege/internet"/>
+  <access origin="https://api.open-meteo.com" subdomains="false"/>
+  <access origin="https://geocoding-api.open-meteo.com" subdomains="false"/>
+  <access origin="*" subdomains="true"/>
+</widget>

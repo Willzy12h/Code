@@ -1,0 +1,8 @@
+.buildResult/
+*.wgt
+*.p12
+*.pfx
+*.key
+*.pem
+node_modules/
+.DS_Store

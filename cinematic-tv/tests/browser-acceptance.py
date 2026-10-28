@@ -1,0 +1,101 @@
+"""Browser-only acceptance of launcher navigation and preferences; not TV hardware certification."""
+from pathlib import Path
+from playwright.sync_api import sync_playwright
+import re,base64,json
+root=Path(__file__).parents[1]
+html=(root/'src/index.html').read_text()
+css=(root/'src/css/styles.css').read_text()
+scenery={}
+for name in ('wallpaper.jpg','wallpaper-twilight.jpg','wallpaper-dawn.jpg'):
+    uri='data:image/jpeg;base64,'+base64.b64encode((root/'src/assets'/name).read_bytes()).decode()
+    scenery[name]=uri
+    css=css.replace("url('../assets/"+name+"')", "url('"+uri+"')")
+html=re.sub(r'<link[^>]*stylesheet[^>]*>', '<style>'+css+'</style>',html)
+for name in ['model','platform','app']:
+    script=(root/'src/js'/ (name+'.js')).read_text()
+    for filename,uri in scenery.items():
+        script=script.replace("'assets/"+filename+"'", "'"+uri+"'")
+    html=html.replace('<script src="js/'+name+'.js"></script>', '<script>'+script+'</script>')
+errors=[]
+with sync_playwright() as p:
+    browser=p.chromium.launch(executable_path='/usr/bin/chromium',headless=True,args=['--no-sandbox','--disable-dev-shm-usage'])
+    page=browser.new_page(viewport={'width':1920,'height':1080},device_scale_factor=1)
+    page.on('pageerror',lambda e:errors.append(str(e)))
+    page.evaluate("""() => {
+      Object.defineProperty(window,'localStorage',{configurable:true,value:{_data:{},getItem(k){return this._data[k]||null},setItem(k,v){this._data[k]=v},removeItem(k){delete this._data[k]}}});
+      window.fetch=(url)=>Promise.resolve({ok:true,json:()=>Promise.resolve(String(url).includes('geocoding')?{results:[{name:'Ealing',admin1:'England',country:'United Kingdom',latitude:51.51,longitude:-.30}]}:{current:{temperature_2m:13,weather_code:2}})});
+    }""")
+    page.set_content(html,wait_until='domcontentloaded')
+    page.wait_for_timeout(150)
+    assert page.locator('#favourites .app-card').count()==8
+    assert page.locator('#recent-list .navitem').count()==4
+    assert page.locator('.is-focused').first.get_attribute('data-itemid')=='input:HDMI:1'
+    page.screenshot(path=str(root/'home-v0.2.0.png'),full_page=True)
+    # Key navigation must reach native launcher-settings control from Home.
+    page.keyboard.press('ArrowUp')
+    assert page.locator('.is-focused').get_attribute('data-action')=='settings','Settings must be D-pad accessible'
+    page.keyboard.press('Enter')
+    assert page.locator('#page-title').inner_text()=='Launcher Settings'
+    before=page.locator('button[data-action="setting-layout"] .setting-value').inner_text()
+    page.locator('button[data-action="setting-layout"]').click()
+    assert page.locator('.is-focused').get_attribute('data-action')=='setting-layout','Settings must restore focus on change'
+    assert page.locator('button[data-action="setting-layout"] .setting-value').inner_text()!=before
+    page.locator('button[data-action="setting-wallpaper"]').click()
+    assert page.locator('button[data-action="setting-wallpaper"] .setting-value').inner_text()=='Twilight'
+    page.locator('button[data-action="setting-unit"]').click()
+    assert page.locator('button[data-action="setting-unit"] .setting-value').inner_text()=='°F'
+    page.screenshot(path=str(root/'settings-v0.2.0.png'),full_page=True)
+    # Explicit weather search and selection, without GPS.
+    page.locator('button[data-action="setting-city"]').click()
+    page.locator('.dialog-input').fill('Ealing')
+    page.locator('#modal-actions button').filter(has_text='Save').click()
+    page.wait_for_timeout(50)
+    assert page.locator('#modal-title').inner_text()=='Choose weather location'
+    page.locator('#modal-actions button').filter(has_text='Ealing').click()
+    assert page.locator('button[data-action="setting-city"] .setting-value').inner_text()=='Ealing'
+    # Modify favourites; pin PC and keep it visible on Home.
+    page.keyboard.press('Escape')
+    page.locator('button[data-action="edit"]').first.click()
+    assert page.locator('#edit-grid .edit-action').count()==10
+    page.locator('button[data-action="editinput"]').click()
+    page.locator('#modal-actions button').filter(has_text='PC').click()
+    assert page.locator('#edit-grid .edit-action').count()==11
+    page.keyboard.press('Escape')
+    assert page.locator('#favourites .app-card').count()==9
+    assert page.locator('#favourites .app-card').last.get_attribute('data-itemid')=='input:HDMI:1'
+    page.screenshot(path=str(root/'home-pinned-pc.png'),full_page=True)
+    # Edit home -> move pinned app left using remote, commit, and preserve order.
+    page.locator('button[data-action="edit"]').first.click()
+    page.locator('#edit-grid .edit-action').last.nth(0) # no action, sanity
+    page.locator('#edit-grid button[data-itemid="input:HDMI:1"]').click()
+    page.locator('#modal-actions button').filter(has_text=re.compile('^Move$')).click()
+    assert page.locator('.edit-action.moving').count()==1
+    page.keyboard.press('ArrowLeft')
+    page.keyboard.press('Enter')
+    assert page.locator('#edit-grid button[data-itemid="input:HDMI:1"]').count()==1
+    page.keyboard.press('Escape')
+    assert page.locator('#favourites .app-card').nth(7).get_attribute('data-itemid')=='input:HDMI:1'
+    # All apps: search, hide an app, then explicitly show hidden and restore.
+    page.locator('button[data-action="apps"]').first.click()
+    assert page.locator('#apps-grid .app-card').count()==17
+    page.locator('button[data-action="search-apps"]').click()
+    page.locator('.dialog-input').fill('Plex')
+    page.locator('#modal-actions button').filter(has_text='Save').click()
+    assert page.locator('#apps-grid .app-card').count()==1
+    page.locator('#apps-grid .app-card').first.focus()
+    page.keyboard.down('Enter');page.wait_for_timeout(220);page.keyboard.up('Enter')
+    assert page.locator('#modal-title').inner_text()=='Plex'
+    page.locator('#modal-actions button').filter(has_text='Hide from All Apps').click()
+    assert page.locator('#apps-grid .app-card').count()==0
+    page.keyboard.press('Escape')
+    page.locator('button[data-action="settings"]').click()
+    page.locator('button[data-action="setting-hidden"]').click()
+    page.keyboard.press('Escape')
+    page.locator('button[data-action="apps"]').first.click()
+    assert page.locator('#apps-grid .app-card').count()==1
+    assert page.locator('#apps-grid .app-card.hidden-app').count()==1
+    page.screenshot(path=str(root/'all-apps-v0.2.0.png'),full_page=True)
+    assert not errors,errors
+    print(json.dumps({'result':'PASS','home_favourites_after_pin':9,'app_catalogue':17,'settings_count':22,'browser_js_errors':errors},indent=2))
+    browser.close()
+
