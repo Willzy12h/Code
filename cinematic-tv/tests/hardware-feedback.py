@@ -51,7 +51,7 @@ with sync_playwright() as p:
         assert page.evaluate("window.__calls.filter(x=>x==='show').length")==shows, 'App focus restarted the same HDMI preview'
         assert 'live hdmi' not in page.locator('#preview').inner_text().lower()
         assert 'live preview' not in page.locator('#preview').inner_text().lower()
-        r=page.evaluate('window.__rects[0].map(parseFloat)')
+        r=page.evaluate('window.__rects[0].map((v,i)=>parseFloat(v)*(i%2?innerHeight:innerWidth)/100)')
         assert abs(r[2]/r[3]-16/9)<.01
         assert r[2]>=1920*.44 and r[3]>=1080*.44, 'HDMI picture is still too small'
         media=page.locator('#preview-media').bounding_box();caption=page.locator('#preview .preview-bottom').bounding_box()
@@ -82,7 +82,7 @@ with sync_playwright() as p:
         assert preview.locator('[id]').count()==0
         assert preview.locator('.navitem').count()==0
         before=preview.locator('.backdrop').get_attribute('style')
-        click(page,'setting-wallpaper');click(page,'setting-wallpaper')
+        click(page,'setting-wallpaper');click(page,'setting-wallpaper');page.wait_for_timeout(750)
         assert preview.locator('.backdrop').get_attribute('style')!=before
         assert preview.locator('button:not([disabled])').count()==0
         assert not page.evaluate("window.__calls.includes('show')")

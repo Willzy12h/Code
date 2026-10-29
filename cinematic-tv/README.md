@@ -1,8 +1,8 @@
-# Cinematic TV 0.4.4
+# Cinematic TV 0.4.5
 
 A personal, remote-first Samsung Tizen TV launcher. The agreed Cinematic Spotlight layout is retained: recent apps/inputs on the left, an adaptive preview beside them, favourites below, and open scenic wallpaper. No recommendation feed, adverts, telemetry, accounts or custom screensaver.
 
-**Status: 0.4.4 hardware-feedback candidate; see [patch validation and remaining TV acceptance](docs/TV-FEEDBACK-0.4.1.md). Signed 0.4.0, 0.4.1 and 0.4.2 packages were installed and launched on the identified S95H. The user confirmed quicker response and improving artwork; physical acceptance of 0.4.4 remains pending while the user is away.** A Samsung TV package is `.wgt`, not an Android APK.
+**Status: 0.4.5 hardware-feedback candidate; see [patch validation and remaining TV acceptance](docs/TV-FEEDBACK-0.4.1.md). Signed 0.4.0, 0.4.1 and 0.4.2 packages were installed and launched on the identified S95H. The user confirmed quicker response and improving artwork; physical acceptance of 0.4.4 remains pending while the user is away.** A Samsung TV package is `.wgt`, not an Android APK.
 
 ## Start here: SDK already installed
 
@@ -70,3 +70,7 @@ See [comparison and readiness review](docs/review/READINESS.md), [test results](
 ## Artwork and hidden apps (0.4.4)
 
 Common favourite apps use locally bundled vector marks, with sources and terms in `src/assets/brands/`. Other apps keep native artwork and readable fallbacks. In All Apps, hold OK and choose Hide from All Apps. Choose Hidden apps in All Apps or Manage hidden apps in Launcher Settings to restore one or all listed apps. This preserves Home pins and never reveals filtered system services. Recently used fits its entries while the larger preview stays in place. Physical acceptance is pending while the user is away.
+
+## 0.4.5 refinement
+
+The preview is selectable with the remote: focus it and press OK to open the displayed HDMI input. Its native picture is inset within the frame using normalised viewport coordinates. PC is the initial selection; explicit saved PC ports remain intact. Undo is available for ten seconds after hiding an app or removing a Home favourite. Wallpaper is decoded before a crossfade, with independently switchable location/time-based darkening. Home is minimal, settings scrolling has safe padding and presets are optional. Read `docs/STARTUP-RETURN-INVESTIGATION.md` for the separate read-only return/default investigation; no Home/system/background-helper changes are included. Physical S95H acceptance remains separate from browser checks.

@@ -17,3 +17,11 @@ test('preview contains 4K, 4:3 and ultrawide sources inside the card without str
  assert.ok(Math.abs(r[2]/r[3]-3440/1440)<.01);
  assert.deepEqual(Array.from(P.fitVideoRect(['0px','0px','1920px','1080px'],null)),['0px','0px','1920px','1080px']);
 });
+
+
+test('percentage preview coordinates preserve source ratio in viewport space',()=>{
+ const P=platform(),r=P.fitVideoRect(['10%','10%','50%','50%'],{width:1920,height:1080});
+ assert.deepEqual(Array.from(r),['10.00000%','10.00000%','50.00000%','50.00000%']);
+ const four=P.fitVideoRect(['10%','10%','50%','50%'],{width:1440,height:1080}).map(parseFloat);
+ assert.ok(Math.abs((four[2]*1920)/(four[3]*1080)-4/3)<.001);
+});

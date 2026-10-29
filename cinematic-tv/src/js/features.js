@@ -4,7 +4,7 @@
   else root.LauncherFeatures=factory(root.LauncherModel);
 }(typeof window!=='undefined'?window:this,function(M){
   'use strict';
-  var PROFILE_KEYS=['favouriteIds','layout','recentCount','wallpaper','glow','reducedMotion'];
+  var PROFILE_KEYS=['favouriteIds','layout','recentCount','wallpaper','glow','reducedMotion','autoDimming'];
   function previousItem(recent,lookup){
     for(var i=1;i<(recent||[]).length;i++){
       var item=lookup(recent[i].id);
@@ -47,7 +47,7 @@
     return s;
   }
   function resetSection(state,section){
-    var groups={appearance:['layout','wallpaper','customWallpaperUrl','glow','reducedMotion','reducedEffects','adaptiveWeather'],
+    var groups={appearance:['layout','wallpaper','customWallpaperUrl','glow','reducedMotion','autoDimming','reducedEffects','adaptiveWeather','autoDimming'],
       inputs:['inputNames','inputIcons','pcPort','hideDisconnected'],history:['recent'],hidden:['hiddenAppIds','showHidden'],
       weather:['city','latitude','longitude','tempUnit','showWeather'],favourites:['favouriteIds']};
     if(!groups[section])throw new Error('Unknown reset section');

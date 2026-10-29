@@ -57,7 +57,7 @@ with server() as url, sync_playwright() as p:
         page=fresh(native=True);tile=page.locator('#favourites .app-card').first;tile.focus()
         page.keyboard.press('Enter');page.keyboard.press('Enter');page.wait_for_timeout(40)
         assert page.evaluate('window.__calls.filter(x=>x.startsWith("launch:")).length')==1
-        assert page.locator('.toast').inner_text().startswith(('Opening','Waiting'))
+        assert not page.locator('.toast').inner_text().startswith(('Opening','Waiting'))
         page.close()
     case('Double OK sends one launch request',duplicate_launch)
     def quick_switch():
@@ -129,7 +129,7 @@ with server() as url, sync_playwright() as p:
     def stale_location():
         page=fresh();page.evaluate("()=>{const original=window.fetch;window.fetch=url=>String(url).includes('geocoding')?new Promise(resolve=>window.__locationResponse=resolve):original(url)}")
         click(page,'settings');click(page,'setting-city');page.locator('.dialog-input').fill('Ealing');page.get_by_role('button',name='Save',exact=True).click()
-        page.keyboard.press('Escape');assert page.locator('#page-title').inner_text()=='Home'
+        page.keyboard.press('Escape');assert page.locator('#home').is_visible() and not page.locator('#page-title').is_visible()
         page.evaluate("()=>{window.__locationResponse({ok:true,json:async()=>({results:[{name:'Ealing',latitude:51.51,longitude:-.3}]})})}")
         page.wait_for_timeout(50);assert page.locator('#confirm.hidden').count()==1;page.close()
     case('Late location search cannot replace a different page',stale_location)

@@ -13,7 +13,7 @@ with sync_playwright() as p:
     page.wait_for_timeout(180)
     assert page.locator('#favourites .app-card').count()==8
     assert page.locator('#recent-list .navitem').count()==4
-    assert page.locator('.is-focused').first.get_attribute('data-itemid')=='input:HDMI:1'
+    assert page.locator('#preview-hit.is-focused').get_attribute('aria-label')=='Open PC — HDMI 1'
     page.screenshot(path=str(root/'home-v0.2.0.png'),full_page=True)
     # Key navigation must reach native launcher-settings control from Home.
     page.keyboard.press('ArrowUp')

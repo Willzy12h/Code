@@ -4,8 +4,8 @@
   var t = w.tizen, isTV = !!(t && t.application), iconCache = {};
   function error(cb, e) { if (typeof cb === 'function') cb(e && e.message ? e.message : String(e || 'Unsupported on this TV')); }
   function fitVideoRect(rect,resolution){
-    if(!Array.isArray(rect)||rect.length!==4||rect.some(function(v){return !/^-?\d+(?:\.\d+)?(?:px)?$/.test(String(v));}))return rect;
-    var r=rect.map(parseFloat),ratio=16/9;
+    if(!Array.isArray(rect)||rect.length!==4||rect.some(function(v){return !/^-?\d+(?:\.\d+)?(?:px|%)?$/.test(String(v));}))return rect;
+    var percent=rect.every(function(v){return String(v).endsWith('%');}),r=rect.map(function(v,i){return parseFloat(v)*(percent?(i%2?(w.innerHeight||1080):(w.innerWidth||1920))/100:1);}),ratio=16/9;
     if(resolution){
       if(resolution.aspectRatio==='ASPECT_RATIO_4x3')ratio=4/3;
       else if(resolution.aspectRatio==='ASPECT_RATIO_16x9')ratio=16/9;
@@ -13,7 +13,7 @@
     }
     if(!Number.isFinite(ratio)||ratio<.25||ratio>5||r[2]<=0||r[3]<=0)return rect;
     var width=Math.min(r[2],r[3]*ratio),height=width/ratio;
-    return [r[0]+(r[2]-width)/2,r[1]+(r[3]-height)/2,width,height].map(function(n){return Math.round(n)+'px';});
+    return [r[0]+(r[2]-width)/2,r[1]+(r[3]-height)/2,width,height].map(function(n,i){return percent?(n/(i%2?(w.innerHeight||1080):(w.innerWidth||1920))*100).toFixed(5)+'%':Math.round(n)+'px';});
   }
   function sameSource(a, b) { return !!(a && b && a.type === b.type && Number(a.number) === Number(b.number)); }
 

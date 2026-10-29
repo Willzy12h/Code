@@ -31,7 +31,7 @@ test('stored preferences are validated and recent entries sanitised',()=>{
 test('upgrades previous preference state without losing valid app and HDMI pins',()=>{
  const prefs=M.load(JSON.stringify({version:1,favouriteIds:['app:old','input:HDMI:1','input:HDMI:1'],wallpaper:'scenic'}));
  assert.deepEqual(prefs.favouriteIds,['app:old','input:HDMI:1']);
- assert.equal(prefs.focusDefault,'recent');assert.equal(prefs.longPressMs,190);
+ assert.equal(prefs.focusDefault,'pc');assert.equal(prefs.longPressMs,190);
 });
 test('custom wallpaper URLs reject insecure schemes and invalid input',()=>{
  assert.equal(M.safeUrl('http://example.com/wall.jpg'),'');

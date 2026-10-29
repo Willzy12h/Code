@@ -11,7 +11,7 @@
     ['Prime Video',/^(?:amazon\s*)?(?:prime\s*)?video$/i],['Hue Sync',/^(?:philips\s*)?hue\s*sync(?:\s*tv)?$/i],
     ['BBC iPlayer',/^bbc\s*iplayer$/i],['ITVX',/^(?:itvx|itv\s*hub)$/i],['Channel 4',/^(?:channel\s*4|all\s*4)$/i],
     ['5',/^(?:5|channel\s*5|my5)$/i],['Spotify',/^spotify(?:\s*[-–:]\s*music.*)?$/i],['Plex',/^plex(?:\s*[-–:]\s*stream.*)?$/i],['Twitch',/^twitch(?:\s*tv)?$/i],
-    ['SmartThings',/^smartthings$/i],['Samsung Health',/^samsung\s*health$/i]
+    ['BBC Sounds',/^bbc\s*sounds$/i],['SmartThings',/^(?:samsung\s*)?smartthings$/i],['Samsung Health',/^samsung\s*health$/i]
   ];
   function safeText(s, limit) { return String(s == null ? '' : s).replace(/[\u0000-\u001f\u007f]/g, '').slice(0,limit || 100); }
   function unique(a) { var seen=Object.create(null);return a.filter(function(x){if(seen[x])return false;seen[x]=1;return true;}); }
@@ -21,9 +21,9 @@
     showWeather:true,showClock:true,hdmiPreview:false,previewMode:'selected',reducedMotion:false,glow:'blue',
     city:'London',latitude:51.5074,longitude:-0.1278,tempUnit:'celsius',
     inputNames:{},pcPort:'',hideDisconnected:true,favouriteOrderNames:PRIMARY.slice(),wallpaper:'scenic',
-    customWallpaperUrl:'', focusDefault:'recent',hiddenAppIds:[],showHidden:false,
+    customWallpaperUrl:'', focusDefault:'pc',hiddenAppIds:[],showHidden:false,
     longPressMs:190, previewBrand:'subtle', setupDone:false, showNetwork:false, quickSwitch:true,
-    profiles:[], inputIcons:{}, adaptiveWeather:false, reducedEffects:false, autoPreviewCurrentOnly:true
+    uiRevision:0,autoDimming:true,profiles:[], inputIcons:{}, adaptiveWeather:false, reducedEffects:false, autoPreviewCurrentOnly:true
   };}
   function safeUrl(value) {
     if (typeof value !== 'string' || value.length > 450 || /[\s\x00-\x1f\x7f"'<>\\]/.test(value)) return '';
@@ -68,7 +68,7 @@
     if(['cinematic','balanced','compact'].indexOf(d.layout)<0)d.layout='cinematic';
     if(['scenic','twilight','dawn','dark','custom','auto','daily'].indexOf(d.wallpaper)<0)d.wallpaper='scenic';
     if(['blue','white'].indexOf(d.glow)<0)d.glow='blue';
-    if(['recent','pc','favourite'].indexOf(d.focusDefault)<0)d.focusDefault='recent';
+    if(['recent','pc','favourite'].indexOf(d.focusDefault)<0)d.focusDefault='pc';
     d.customWallpaperUrl=safeUrl(d.customWallpaperUrl);
     if(d.wallpaper==='custom'&&!d.customWallpaperUrl)d.wallpaper='scenic';
     d.city=safeText(d.city,65)||'London';
@@ -79,14 +79,14 @@
     d.previewMode=['off','selected'].indexOf(d.previewMode)>=0?d.previewMode:(d.hdmiPreview?'selected':'off');
     d.showWeather=d.showWeather!==false;d.showClock=d.showClock!==false;
     d.showHidden=d.showHidden===true;d.hideDisconnected=d.hideDisconnected!==false;
-    d.reducedMotion=d.reducedMotion===true;
+    d.reducedMotion=d.reducedMotion===true;d.autoDimming=d.autoDimming!==false;d.uiRevision=d.uiRevision===1?1:0;
     d.setupDone=d.setupDone===true; d.showNetwork=d.showNetwork===true; d.quickSwitch=d.quickSwitch!==false;
     d.adaptiveWeather=d.adaptiveWeather===true; d.reducedEffects=d.reducedEffects===true;
     d.autoPreviewCurrentOnly=d.autoPreviewCurrentOnly!==false;
     d.profiles=Array.isArray(d.profiles)?d.profiles.slice(0,8).filter(function(x){return x && typeof x.name==='string';}).map(function(x){
       return {name:safeText(x.name,32).trim()||'Home', favouriteIds:validIds(x.favouriteIds), layout:['cinematic','balanced','compact'].indexOf(x.layout)>=0?x.layout:'cinematic',
         recentCount:Math.round(between(x.recentCount,2,6,4)),wallpaper:['scenic','dawn','twilight','dark','auto','daily'].indexOf(x.wallpaper)>=0?x.wallpaper:'scenic',
-        glow:x.glow==='white'?'white':'blue',reducedMotion:x.reducedMotion===true};
+        autoDimming:x.autoDimming!==false,glow:x.glow==='white'?'white':'blue',reducedMotion:x.reducedMotion===true};
     }):[];
     return d;
   }

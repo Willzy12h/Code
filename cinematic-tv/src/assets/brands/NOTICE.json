@@ -53,6 +53,27 @@
       "sha256": "dbe27bc02a01b8d89b6259cacef328c9fa70bb13c29f38c36eb1421863f6f0b6",
       "brand_source": "https://brand.twitch.tv",
       "individual_licence": null
+    },
+    {
+      "name": "Channel 4",
+      "upstream_svg": "https://raw.githubusercontent.com/simple-icons/simple-icons/2f67e5d1a7e5cba43c79a0ebc00abcd95fb0ea30/icons/channel4.svg",
+      "sha256": "cb7205ad42186cf48bb30e350753d0323e1f4efd03a33749c7e17e7868d4978a",
+      "brand_source": "https://mediaassets.channel4.com/guidelines/guide/34286b7b-ea25-404d-a43b-e912fc85b0e0/page/8a2dd59a-51df-4f47-aa37-c235a761455e",
+      "individual_licence": null
+    },
+    {
+      "name": "Hue Sync",
+      "upstream_svg": "https://raw.githubusercontent.com/simple-icons/simple-icons/2f67e5d1a7e5cba43c79a0ebc00abcd95fb0ea30/icons/philipshue.svg",
+      "sha256": "40af91ab8287c8131a7dcfa9f37fd0912622ce2970aa297cbf7d61468582ba34",
+      "brand_source": "https://www.philips-hue.com/en-us/support/faq",
+      "individual_licence": null
+    },
+    {
+      "name": "SmartThings",
+      "upstream_svg": "https://raw.githubusercontent.com/simple-icons/simple-icons/2f67e5d1a7e5cba43c79a0ebc00abcd95fb0ea30/icons/smartthings.svg",
+      "sha256": "32e0bb023fc18f55b8f589bb071beff1ad02941672edd6543428c14bed0201d6",
+      "brand_source": "https://www.smartthings.com/press-kit",
+      "individual_licence": null
     }
   ]
 }

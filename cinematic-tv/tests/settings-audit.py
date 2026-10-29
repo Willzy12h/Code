@@ -21,12 +21,12 @@ with sync_playwright() as p:
         def run(page):click(page,action);assert state(page)[key]==want,(key,state(page).get(key))
         audit(action,run)
     for action,key,want in [
-      ('setting-focus','focusDefault','pc'),('setting-recent','recentCount',5),
+      ('setting-focus','focusDefault','favourite'),('setting-recent','recentCount',5),
       ('setting-quick','quickSwitch',False),('setting-network','showNetwork',True),
       ('setting-weather','showWeather',False),('setting-clock','showClock',False),
       ('setting-unit','tempUnit','fahrenheit'),('setting-adaptive','adaptiveWeather',True),
       ('setting-effects','reducedEffects',True),('setting-glow','glow','white'),
-      ('setting-motion','reducedMotion',True),('setting-hold','longPressMs',250),
+      ('setting-motion','reducedMotion',True),('setting-dimming','autoDimming',False),('setting-hold','longPressMs',250),
       ('setting-disconnected','hideDisconnected',False),('setting-hidden','showHidden',True)
     ]:toggle(action,key,want)
     def setup(page):click(page,'setting-setup');button(page,'Use recommended setup');assert state(page)['setupDone'] and state(page)['previewMode']=='off'
