@@ -53,10 +53,27 @@ with sync_playwright() as p:
         assert 'live preview' not in page.locator('#preview').inner_text().lower()
         r=page.evaluate('window.__rects[0].map(parseFloat)')
         assert abs(r[2]/r[3]-16/9)<.01
+        assert r[2]>=1920*.44 and r[3]>=1080*.44, 'HDMI picture is still too small'
+        media=page.locator('#preview-media').bounding_box();caption=page.locator('#preview .preview-bottom').bounding_box()
+        assert caption['y']>=media['y']+media['height']-1, 'Caption overlaps the picture'
+        assert page.locator('#preview-title').bounding_box()['height']<=1080*.03, 'HDMI title takes too much picture space'
         click(page,'settings');page.wait_for_timeout(80)
         assert page.evaluate("window.__calls.includes('hide')")
         page.close()
     case('PC preview stays clean and proportional while browsing and stops for menus',persistent_pc)
+    def stable_refresh():
+        page=fresh({'previewMode':'selected'},True);page.wait_for_timeout(250)
+        before=page.evaluate("window.__calls.filter(x=>x==='show'||x==='hide')")
+        page.evaluate("window.__packages.onupdated({})");page.wait_for_timeout(450)
+        assert page.evaluate("window.__calls.filter(x=>x==='show'||x==='hide')")==before, 'Catalogue refresh restarted the live video plane'
+        page.evaluate("window.dispatchEvent(new Event('resize'))");page.wait_for_timeout(300)
+        assert page.evaluate("window.__calls.filter(x=>x==='show'||x==='hide')")==before, 'Unchanged viewport resize restarted the live video plane'
+        assert page.locator('#preview.is-live').count()==1
+        click(page,'settings');page.wait_for_timeout(80)
+        assert page.evaluate("window.__calls.filter(x=>x==='hide').length")>=1, 'Leaving Home failed to clean up preserved video'
+        page.close()
+    case('Unchanged catalogue and viewport refresh preserve the active video plane',stable_refresh)
+
     def settings_preview():
         page=fresh({'previewMode':'off'},True);click(page,'settings')
         assert page.locator('[data-action="setting-layout"]').count()==0
@@ -81,7 +98,7 @@ with sync_playwright() as p:
         assert image.bounding_box()['width']/logo.bounding_box()['width']>.98, 'Native artwork does not reach the rounded tile edge'
         scale=logo.evaluate("e=>new DOMMatrix(getComputedStyle(e).transform).a")
         assert scale>=1.06, 'Focus does not clearly lift the selected tile'
-        assert image.evaluate("e=>getComputedStyle(e).objectFit")=='cover'
+        assert image.evaluate("e=>getComputedStyle(e).objectFit")=='contain'
         youtube=page.locator('#favourites .app-card').first
         assert youtube.locator('svg').count()==1 and youtube.locator('img').count()==0, 'YouTube native artwork replaced the consistent mark'
         pc=page.locator('#recent-list .recent-item').first

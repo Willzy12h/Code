@@ -73,7 +73,17 @@ body{position:relative}
 .app-card.preview-focused .logo{transform:translateY(-.45vh) scale(1.065);border-color:rgba(255,255,255,.9);box-shadow:0 12px 28px rgba(0,0,0,.42),0 0 0 2px var(--accent)}.recent-item.preview-focused{box-shadow:0 8px 24px rgba(0,0,0,.3),0 0 0 2px var(--accent);border-color:rgba(255,255,255,.7)}
 .reduced-motion .app-card.preview-focused .logo{transform:none}
 
-/* Native artwork reaches the tile edge, clipped once by its rounded silhouette. */
-.logo img.native-icon{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border:0;border-radius:inherit}
+/* Native artwork uses the full tile height without cropping brand marks. */
+.logo img.native-icon{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;border:0;border-radius:inherit}
 .logo .input-mark{display:flex;align-items:center;justify-content:center;width:68%;height:74%;color:#e9f4ff}
 .logo .input-mark svg{width:100%;height:100%;display:block}
+
+/* Give the picture more of Home; the compact caption sits outside its frame. */
+.spotlight{width:66vw;height:49vh;gap:.65vw}
+.recents-shell{width:28.5%}
+.preview{padding:0;border:0;background:transparent;box-shadow:none;overflow:visible}
+.preview-media{border:1px solid rgba(255,255,255,.18);border-radius:.85vw;box-shadow:0 10px 28px rgba(0,0,0,.22)}
+.preview-bottom{height:3vh;flex-shrink:0;padding:.35vh .3vw 0;align-items:center}
+.preview-details{display:flex;align-items:baseline;gap:.65vw;min-width:0}
+.preview-title{font-size:1.35vh;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.preview-meta{font-size:1.15vh;margin-top:0;white-space:nowrap;color:#c9d5e6}

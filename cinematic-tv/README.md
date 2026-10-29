@@ -1,10 +1,8 @@
-> 0.4.2 follow-up: the user observed quicker response on 0.4.1, but startup flicker and inset square icons. Current-source preview now avoids reselecting HDMI; artwork fills the rounded tile, YouTube uses its vector mark and PC/HDMI shortcuts use a vector monitor. Physical acceptance of this follow-up is pending.
-
-# Cinematic TV 0.4.2
+# Cinematic TV 0.4.3
 
 A personal, remote-first Samsung Tizen TV launcher. The agreed Cinematic Spotlight layout is retained: recent apps/inputs on the left, an adaptive preview beside them, favourites below, and open scenic wallpaper. No recommendation feed, adverts, telemetry, accounts or custom screensaver.
 
-**Status: 0.4.1 hardware-feedback candidate; see [patch validation and remaining TV acceptance](docs/TV-FEEDBACK-0.4.1.md). The first 0.4.0 package was signed, installed and launched on the identified S95H.** A Samsung TV package is `.wgt`, not an Android APK.
+**Status: 0.4.3 hardware-feedback candidate; see [patch validation and remaining TV acceptance](docs/TV-FEEDBACK-0.4.1.md). Signed 0.4.0, 0.4.1 and 0.4.2 packages were installed and launched on the identified S95H. The user confirmed quicker response and improving artwork; final 0.4.3 physical acceptance remains pending.** A Samsung TV package is `.wgt`, not an Android APK.
 
 ## Start here: SDK already installed
 

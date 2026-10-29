@@ -88,7 +88,12 @@ with sync_playwright() as p:
     audit('setting-diagnostics',diagnostics)
     def icons(page):click(page,'setting-icons');button(page,'PC');button(page,'Console');assert state(page)['inputIcons']['HDMI 1']=='console'
     audit('setting-icons',icons)
-    def about(page):click(page,'setting-about');assert page.locator('#modal-title').inner_text().startswith('Cinematic TV 0.4.');assert 'No updater' in page.locator('#modal-text').inner_text()
+    def about(page):
+        click(page,'setting-about');assert page.locator('#modal-title').inner_text().startswith('Cinematic TV 0.4.');assert 'No updater' in page.locator('#modal-text').inner_text()
+        page.evaluate("window.__releaseURL='';window.fetch=async url=>{window.__releaseURL=String(url);return{ok:true,json:async()=>({tag_name:'v0.4.0',prerelease:false,draft:false})}}")
+        button(page,'Check public releases');page.wait_for_timeout(100)
+        assert page.evaluate('window.__releaseURL')=='https://api.github.com/repos/Willzy12h/Code/releases/latest'
+        assert 'No newer stable public release' in page.locator('#toast').inner_text()
     audit('setting-about',about)
     def export(page):
         with page.expect_download() as download:click(page,'setting-log-export')

@@ -1,7 +1,7 @@
 /* Cinematic TV v0.4 — remote-first Samsung TV launcher. */
 (function(w,doc){
   'use strict';
-  var M=w.LauncherModel,P=w.LauncherPlatform,F=w.LauncherFeatures,VERSION='0.4.2';
+  var M=w.LauncherModel,P=w.LauncherPlatform,F=w.LauncherFeatures,VERSION='0.4.3';
   var STORAGE='cinematic-tv-v1', APP_CACHE='cinematic-tv-apps-v2', WEATHER_CACHE='cinematic-tv-weather-v1';
   function storageGet(key){try{return localStorage.getItem(key);}catch(e){return null;}}
   var state=M.load(storageGet(STORAGE)),page='home',filter='All',searchTerm='',selected=null,modalOpen=false,modalReturn=null;
@@ -12,7 +12,7 @@
   var weatherController=null,weatherCode=null,locationRequest=0,unwatchApps=null,unwatchInputs=null,watchTimer=null,viewFocus={};
   var dailyClient=null,dailyRecord=null,dailyObjectUrl='',wallpaperStatus='Bundled wallpaper',weatherStatus='Not checked',weatherError='';
   try{var imageDb=null;try{imageDb=w.indexedDB;}catch(e){}dailyClient=w.LauncherWallpapers.create(w.fetch.bind(w),w.LauncherWallpapers.browserCache(imageDb));}catch(e){}
-  var weatherTime=0,weatherInFlight=false,weatherRequest=0,iconLoads={};
+  var weatherTime=0,weatherInFlight=false,weatherRequest=0,iconLoads={},viewportWidth=w.innerWidth,viewportHeight=w.innerHeight;
   var q=function(s){return doc.querySelector(s);};
   var qa=function(s){return Array.prototype.slice.call(doc.querySelectorAll(s));};
   function el(tag,cls,text){var e=doc.createElement(tag);if(cls)e.className=cls;if(text!==undefined)e.textContent=text;return e;}
@@ -114,10 +114,10 @@
   }
   function checkUpdates(){
     toast('Checking public releases…');
-    requestJSON('https://api.github.com/repos/Willzy12h/cinematic-tv-launcher/releases/latest',6500).then(function(data){
+    requestJSON('https://api.github.com/repos/Willzy12h/Code/releases/latest',6500).then(function(data){
       if(data.prerelease||data.draft||!data.tag_name){toast('No stable public release found');return;}
       toast(F.isNewer(data.tag_name,VERSION)?'New release '+M.safeText(data.tag_name,30)+' available on GitHub':'No newer stable public release found');
-    }).catch(function(){toast('Could not check public releases; the repository may not be published or the network may be unavailable');});
+    }).catch(function(e){toast(e.message==='Request failed (404)'?'No stable public release published yet':'Could not check public releases; the network may be unavailable');});
   }
   function requestJSON(url,timeout,controller){
     controller=controller||(typeof AbortController==='function'?new AbortController():null);
@@ -295,7 +295,7 @@
     item=previewTarget(item);
     if(state.previewMode==='selected'&&item.id===previewingId){
       var active=P.videoStatus(),source=P.currentSource();
-      if(active.owner==='preview'&&active.visible&&!active.blocked&&!active.pending&&source&&item.raw&&source.type===item.raw.type&&Number(source.number)===Number(item.raw.number))return;
+      if(item.connected&&active.owner==='preview'&&active.visible&&!active.blocked&&!active.pending&&source&&item.raw&&source.type===item.raw.type&&Number(source.number)===Number(item.raw.number))return;
     }
     previewingId=item.id;
     var gen=++previewGeneration;clearTimeout(previewTimer);stopVideoPreview();var area=q('#preview'),art=q('#preview-art');area.classList.remove('is-live');art.textContent='';art.className='preview-art';
@@ -363,7 +363,10 @@
     Array.prototype.slice.call(scene.querySelectorAll('[data-action],[data-itemid],[data-zone]')).forEach(function(n){n.removeAttribute('data-action');n.removeAttribute('data-itemid');n.removeAttribute('data-zone');});
     Array.prototype.slice.call(scene.querySelectorAll('.is-live')).forEach(function(n){n.classList.remove('is-live');});
   }
-  function showPage(next,focus){var changed=next!==page;if(selected)selected.classList.remove('is-focused');selected=null;previewGeneration++;clearTimeout(previewTimer);stopVideoPreview();page=next;
+  function showPage(next,focus){var changed=next!==page,videoState=P.videoStatus();
+    var keepPreview=!changed&&next==='home'&&state.previewMode==='selected'&&videoState.owner==='preview'&&videoState.visible&&!videoState.pending&&!videoState.blocked;
+    if(selected)selected.classList.remove('is-focused');selected=null;
+    if(!keepPreview){previewGeneration++;clearTimeout(previewTimer);stopVideoPreview();}page=next;
     ['home','apps','inputs','edit','settings'].forEach(function(id){q('#'+id).classList.toggle('hidden',id!==next);});
     q('#page-title').textContent=({home:'Home',apps:'All Apps',inputs:'Inputs',edit:'Edit Home',settings:'Launcher Settings'})[next]||'Home';q('#view-subtitle').textContent='';
     if(next==='home')fillHome();if(next==='apps')fillApps();if(next==='inputs')fillInputs();if(next==='edit')fillEdit();if(next==='settings')fillSettings();
@@ -603,7 +606,7 @@
       clearTimeout(watchTimer);watchTimer=setTimeout(function(){refreshData(false);},120);
     });
     if(P.watchApps)unwatchApps=P.watchApps(function(){clearTimeout(watchTimer);watchTimer=setTimeout(function(){refreshData(false);},180);});
-    w.addEventListener('resize',function(){previewingId=null;if(page==='home'&&!modalOpen&&!fullscreenInput&&!launching)showPage('home',captureFocus());});
+    w.addEventListener('resize',function(){if(w.innerWidth===viewportWidth&&w.innerHeight===viewportHeight)return;viewportWidth=w.innerWidth;viewportHeight=w.innerHeight;previewingId=null;if(page==='home'&&!modalOpen&&!fullscreenInput&&!launching)showPage('home',captureFocus());});
     w.addEventListener('online',function(){updateNetwork();refreshWeather(true);});w.addEventListener('offline',updateNetwork);
     w.addEventListener('blur',function(){clearTimeout(enterTimer);enterDown=false;enterLong=false;});
     w.addEventListener('pagehide',function(){if(unwatchInputs)unwatchInputs();if(unwatchApps)unwatchApps();P.leaveFullscreen().then(stopVideoPreview);});

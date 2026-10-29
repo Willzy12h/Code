@@ -1,3 +1,9 @@
+> Final settings review also corrected Check public releases to the authoritative Willzy12h/Code repository and extended the About/settings regression to exercise that nested action. No release is published by this task.
+
+> Latest 0.4.3 layout request: Home picture area enlarged, preview frame/padding reduced and a smaller HDMI caption moved below the picture. Source aspect ratios remain contained. The user stepped away before physical acceptance; browser/native mocks and package/install outcomes must remain distinct from TV observation.
+
+> 0.4.3: the user confirmed improved artwork in 0.4.2 but a slightly cropped Crunchyroll mark and one whole-scene flash. Native artwork is now contained at full tile size, with its existing branded background; unchanged Home refresh preserves active preview, and resize events with unchanged dimensions are ignored. The new failed-before/passed-after refresh regression brings feedback scenarios to eight. A firmware-level initial video-plane transition is not ruled out.
+
 > Follow-up 0.4.2: the user confirmed quicker response on 0.4.1 and reported startup flicker plus nested square YouTube/PC/app artwork. The narrow correction avoids reselecting an already active preview source, keeps YouTube vector artwork, uses a vector input monitor, and clips native artwork to the tile edge. One new native-controller regression brings the Node total to 63; the existing seven feedback cases include stronger artwork assertions. The rest of this file records the 0.4.1 changes and acceptance boundaries.
 
 # Cinematic TV 0.4.1 — S95H feedback
