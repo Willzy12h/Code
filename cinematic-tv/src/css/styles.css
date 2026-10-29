@@ -33,3 +33,13 @@
 .setting-row>div:first-child{min-width:0;flex:1}
 .setting-row .setting-value{flex:0 0 auto;max-width:34%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 @media(max-aspect-ratio:1.55){.favourites-row .app-card{flex-basis:12.6vw}}
+
+/* v0.4 additions keep the scenic layout; no extra permanent content rows. */
+.network-status { font-size:16px; color:#c3d2e2; max-width:140px; }
+[hidden] { display:none !important; }
+.reduced-effects .glass,.reduced-effects .pill,.reduced-effects .setting-row { backdrop-filter:none !important; background-color:rgba(12,23,37,.94); }
+.launch-pending .is-focused { transform:none; }
+.modal-card { max-height:88vh; overflow-y:auto; }
+#modal-actions { flex-wrap:wrap; }
+#recovery-banner { position:fixed;inset:12% 12% auto;z-index:9999;padding:32px;background:#111d2e;color:white;border:2px solid white;font-size:25px; }
+#recovery-banner button { margin:16px;padding:16px;font:inherit; }

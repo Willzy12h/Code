@@ -1,67 +1,94 @@
-# Installing Cinematic TV on a Samsung TV
+# Sign and install Cinematic TV 0.4.0 using your existing SDK
 
-**v0.3.0 build status:** source project, **not** an installable signed `.wgt`. No Tizen SDK or Samsung TV certificate was available to the build environment. No installation on QE48S95HHEXXU has been performed.
+This is a Samsung Tizen **web application (`.wgt`)**, not an APK. The supplied code/staging is unsigned. Signing and the final TV test happen on your Windows PC; no reinstall of a working SDK is needed.
 
-## Prerequisites
+## 1. One-time TV and certificate setup
 
-- A computer with Samsung Tizen Studio, TV Extension and Samsung Certificate Extension.
-- A Samsung TV in Developer Mode on the same local network, with your computer's IP permitted.
-- A valid Samsung TV certificate profile generated for your device. Keep certificates and signing passwords private; do not commit them to Git.
+Check Package Manager has **Web CLI**, the appropriate **Samsung TV Extension** and **Samsung Certificate Extension**. Do not install a generic Android SDK.
 
-## Packaging with Tizen Studio CLI
+On the TV, open Apps → App Settings and enter `12345`. Enable Developer Mode, enter the **PC's** local IPv4 address, and reboot as the TV requires. In Tizen Studio → Tools → Device Manager, add the **TV's** IPv4 address and connect it (normally port 26101). Both devices must be on the same trusted local network. Do not expose this port through the router.
 
-Open a terminal in this repository's root directory:
+In Tools → Certificate Manager: Add (+) → Samsung → TV → create a profile named, for example, **CinematicTV**. Create/import an author certificate, sign in to your Samsung account locally, and create the distributor certificate at **Public** privilege level with the connected TV's **DUID** selected. These features require public privileges only. Back up the author/distributor certificates and passwords securely outside the repository. Reuse the same author identity for every update.
 
-```sh
-npm run build
-bash scripts/package-wgt.sh YOUR_TV_CERTIFICATE_PROFILE
+In Device Manager, use **Permit to install applications** where the SDK exposes/requires it. If your existing Samsung TV profile already covers this TV, reuse it instead of creating a different author identity.
+
+Official references:
+- https://developer.samsung.com/smarttv/develop/getting-started/setting-up-sdk/creating-certificates.html
+- https://developer.samsung.com/smarttv/develop/getting-started/using-sdk/tv-device.html
+- https://developer.samsung.com/smarttv/develop/getting-started/using-sdk/command-line-interface.html
+
+## 2. Windows helper
+
+Extract the complete candidate ZIP and open PowerShell in the directory containing `package.json`, `src` and `scripts`. These commands assume `C:\tizen-studio`; change that path only if your SDK is elsewhere.
+
+```powershell
+.\scripts\Tizen-Local.ps1 -Action Doctor -SdkRoot 'C:\tizen-studio'
+.\scripts\Tizen-Local.ps1 -Action Sign -SdkRoot 'C:\tizen-studio' -CertificateProfile 'CinematicTV'
 ```
 
-The wrapper runs `tizen build-web` on `dist/webapp`, then `tizen package -t wgt -s YOUR_TV_CERTIFICATE_PROFILE -- dist/webapp/.buildResult`. This is the documented SDK workflow but **has not been executed in this environment**, which has neither the Web CLI nor your TV certificate. Look for the resulting signed `.wgt`. Run `sdb devices` to confirm a TV connection. After allowing installation in Device Manager, install using the appropriate `tizen install` arguments for the target. In many CLI configurations:
+Signing produces `signed\Cinematic-TV-0.4.0.wgt` plus a local checks JSON recording SHA-256 and embedded public certificate fingerprints. It does not embed your private keys. It verifies staged payload bytes against the build manifest and checks signature/certificate structure and validity dates. It **does not independently validate the XML signatures or the Samsung trust chain**; SDK packaging and the television are the signing/authorisation gates.
 
-```sh
-tizen install -s YOUR_TV_SERIAL --name PACKAGE_NAME.wgt -- /path/to/src/.buildResult
+If Windows says the downloaded script is blocked, inspect it, then unblock **that file only**:
+
+```powershell
+Unblock-File .\scripts\Tizen-Local.ps1
 ```
 
-Use the actual output directory and package name from your build. Some Tizen Studio versions use a different generated path. See Samsung's official [CLI instructions](https://developer.samsung.com/smarttv/develop/getting-started/using-sdk/command-line-interface.html).
+Do not change the machine-wide execution policy. A policy-managed PC may require an approved local PowerShell execution route; the direct SDK commands below avoid the helper entirely.
 
-## TV developer mode
+Replace the placeholder with the TV's actual IPv4 address:
 
-Follow Samsung's current instructions for Developer Mode for your model. The remote, TV firmware and region affect the menus. Do **not** use unofficial debloat scripts or modify system services to install this build.
+```powershell
+.\scripts\Tizen-Local.ps1 -Action Install -SdkRoot 'C:\tizen-studio' -TvAddress 'YOUR_TV_IPV4_ADDRESS'
+```
 
-## Browser preview
+This connects only to that target, checks it appears as an authorised SDB device, installs the verified WGT and asks the SDK to run `CinemTV001.Launcher`. An SDK command success is not confirmation of the TV picture or remote behaviour. The helper does not enable preview or redirect Samsung Home.
 
-Node.js 18+ is needed only for tests. Run `npm test` and `npm run test:browser`. Preview without the SDK using `npm run preview`, then open `http://localhost:8765`. A demo ribbon is shown and Tizen functions are simulated. Browser previews are **not** proof that Samsung TV APIs work.
+The helper is included for local execution; Windows PowerShell, Samsung SDK packaging, certificate issuance and TV installation were **not** executable in the chat runtime. It contains no credentials or guessed TV IP.
 
-## Rollback
+## 3. Direct SDK commands (fallback)
 
-Exit Cinematic TV (Back on Home), open Samsung's original Home/Apps interface, and uninstall Cinematic TV if unwanted. Settings are stored locally under the application and are removed by uninstalling. This build does **not** attempt to replace Smart Hub, intercept Home, auto-start, disable system components or change the TV's native settings.
+The supplied `dist\webapp` folder already contains the unsigned app; no Node build is needed unless the source is edited. In PowerShell:
 
-## Quick acceptance checks on the S95H
+```powershell
+$Tizen = 'C:\tizen-studio\tools\ide\bin\tizen.bat'
+$Sdb = 'C:\tizen-studio\tools\sdb.exe'
+& $Tizen version
+& $Tizen security-profiles list
+& $Tizen build-web -- "$PWD\dist\webapp"
+& $Tizen package -t wgt -s CinematicTV -- "$PWD\dist\webapp\.buildResult"
+Get-ChildItem .\dist\webapp -Filter *.wgt -Recurse
+```
 
-1. Install and open the launcher without crash; check contrast and font sizes from a normal sofa distance.
-2. Ensure favourite installed apps are populated and enter launches the correct app.
-3. Check returning from apps and retaining recent entries.
-4. Verify Connected/Disconnected state and HDMI numbers against Samsung Sources.
-5. Open the PC HDMI input, then Back to the launcher. Confirm the native Samsung Settings key still behaves normally.
-6. **Only then** enable the live HDMI preview and check whether the video plane appears and whether audio, source selection and cancellation behave safely. **Do not assume the preview is silent.** If audio, source or picture behaviour is wrong, disable it immediately.
-7. Connect/disconnect another HDMI device and check the source list refreshes.
-8. Install a new TV app and refresh the catalogue; add it to Home.
-9. Pin HDMI 1 and a disconnected input to Home; reorder/remove favourites and restart the launcher to confirm persistence. Check that edits do not alter Samsung system settings.
-10. Verify smooth D-pad focus, fast repeated navigation, access to Launcher Settings via D-pad Up from the first recent item, long OK (190 ms default), and Back/Cancel focus restoration.
+Use the actual generated WGT name and directory in the following commands, and the exact device serial shown by `sdb devices`:
 
-## Known platform limits
+```powershell
+& $Sdb connect 'YOUR_TV_IPV4_ADDRESS:26101'
+& $Sdb devices
+& $Tizen install -s 'YOUR_TV_IPV4_ADDRESS:26101' --name 'ACTUAL_PACKAGE.wgt' -- 'ACTUAL_PACKAGE_DIRECTORY'
+& $Tizen run -s 'YOUR_TV_IPV4_ADDRESS:26101' -p 'CinemTV001.Launcher'
+```
 
-- Last-used activity includes apps or inputs launched *through this launcher*. The Tizen documented general application-usage API explicitly notes mobile-only support; system-wide TV history is not implemented.
-- Netflix, Apple TV, YouTube and other streaming apps do **not** expose their active interface or playback to this launcher. Preview backgrounds are static branded gradients, not video or account-specific Continue Watching information.
-- HDMI video preview uses TVWindow behind a user-controlled opt-in toggle. Serialised source changes, cancellation and restoration are tested using an asynchronous mock, but clipping, audio, PIP support and Samsung firmware behaviour remain unverified on your S95H. See docs/HDMI-ACCEPTANCE.md.
-- Samsung's reserved Home and Settings keys are not intercepted. Native quick-settings overlay compatibility needs on-TV validation.
-- Samsung does not officially allow this application to become a complete Smart Hub replacement. Manual launch via Samsung's original Apps menu is supported.
-- Weather uses Open-Meteo (default London), can search towns/postcodes, and caches recent data for offline display. The wallpaper is bundled locally unless a custom HTTPS URL is configured.
+`run -p` takes the **application ID**, not just `CinemTV001`. Do not rename a ZIP to `.wgt` and assume it is signed.
 
+If Certificate Manager knows the profile but Web CLI cannot find it, use the real `profiles.xml` path from your local workspace:
 
-## Weather, custom backgrounds and permissions
+```powershell
+& $Tizen cli-config -g 'default.profiles.path=C:\YOUR_WORKSPACE\.metadata\.plugins\org.tizen.common.sign\profiles.xml'
+```
 
-The bundled wallpapers work offline; live weather needs access to Open-Meteo forecast and geocoding. Settings → Weather location allows a town or postcode search without GPS. Settings → Wallpaper cycles Scenic, Twilight, Dawn and Dark; Settings → Custom wallpaper URL accepts a user-supplied HTTPS image host. Custom network images may be unavailable on the TV if their server blocks direct requests; choose Scenic as fallback.
+That changes the CLI's global profile location; use it only when necessary. Do not paste or upload `profiles.xml`, `.p12` files, tokens or passwords to chat/GitHub.
 
-The widget manifest allows external images for user-entered HTTPS wallpaper URLs. If you prefer a strictly offline launcher, leave a bundled wallpaper selected and disable Weather. No background network job, personal account or analytics service is included.
+## 4. First television acceptance
+
+Leave HDMI preview **Off** initially. Confirm Home renders, the installed-app catalogue is real, your most-used apps launch, remote OK/Back/held OK work, favourites persist after closing, and native Samsung Settings/Home still function. Choose and pin the actual PC port rather than assuming HDMI 1.
+
+Test fullscreen HDMI next, including audio, picture settings, PC text clarity, HDR/VRR/Game Mode where relevant. The TVWindow route is not certified to preserve every native source mode. Use Samsung Sources if anything differs.
+
+Then enable preview. It defaults to the current TV source only, so merely browsing another HDMI tile cannot intentionally switch sources. Test rapid movement, unplug/replug, app switching, suspension and exit. It may still produce HDMI audio. Follow `HDMI-ACCEPTANCE.md` and disable preview on any fault. The TV's built-in idle protection is left untouched; confirm it behaves as expected with preview enabled.
+
+## 5. Recovery and updates
+
+Use native Home/Settings to leave a fault. Disable preview under Launcher Settings; the Recover HDMI action attempts cleanup but will not pretend a still-pending native callback is complete. An interrupted preview is disabled on next startup. Uninstall the launcher through Samsung Apps to revert; there are no watcher services or system patches to undo.
+
+Back up preferences before an update or uninstall. Keep the author certificate unchanged. Do not assume Samsung preserves all application data during a reinstall or accepts an older version as a downgrade. Re-sign a corrected higher-version build when needed.

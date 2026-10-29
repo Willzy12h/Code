@@ -1,65 +1,65 @@
-# Cinematic TV v0.3.0 — Samsung Tizen personal launcher
+# Cinematic TV 0.4.0
 
-A remote-first, clean home screen designed for the **Samsung QE48S95HHEXXU (2026 S95H)**. The user interface is inspired by the agreed Cinematic Spotlight design: vertical recent apps/inputs on the left, an adaptive HDMI/app preview alongside, favourite apps below, and open scenic wallpaper to the right. The launcher contains **no adverts, recommendation feeds, analytics, accounts or telemetry**. It does **not** remove Samsung Smart Hub adverts or advertisements inside third-party apps.
+A personal, remote-first Samsung Tizen TV launcher. The agreed Cinematic Spotlight layout is retained: recent apps/inputs on the left, an adaptive preview beside them, favourites below, and open scenic wallpaper. No recommendation feed, adverts, telemetry, accounts or custom screensaver.
 
-## Features available in 0.3.0
+**Status: locally tested installation candidate, ready for signing with an existing Samsung TV certificate profile. Not yet signed or tested on a physical S95H.** A Samsung TV package is `.wgt`, not an Android APK.
 
-- Home Settings is reachable with D-pad, and Settings retains focus after changes.
-- Quick focus animations (110 ms theme default), reduced-motion support, and a configurable OK long press (190/250/350 ms; default 190 ms).
-- Pin **apps or any HDMI input** directly to Home; pinned HDMI remains visible while disconnected. Rearrange favourites with D-pad: select or hold OK → Move → Left/Right → OK to save, or Back to cancel. Scrolling supports more than eight favourites.
-- Recent-app history and default focus: last launched, the connected input named PC, or first favourite. Recent items reflect apps and inputs launched through **Cinematic TV**, not system-wide Samsung usage.
-- Search installed apps, category filters, hide/show apps, icon fallback handling, app catalogue cache, manual Refresh, plus refresh after returning from another TV app.
-- Named HDMI inputs, connection state and optional **implemented but hardware-unverified** HDMI video thumbnail. The opt-in mode uses Tizen TVWindow with serialised source changes, cancellation, original-source restoration, protection against external source changes, and a native video plane in the preview card. It is disabled by default until S95H testing.
-- Weather from **Open-Meteo**, configurable town/postcode through Open-Meteo geocoding, °C/°F, cached last-known conditions, network timeout and optional visibility.
-- Three offline wallpaper options derived from the design's generated image (Scenic, Twilight, Dawn), plus Dark mode and an **optional manually configured HTTPS image URL**. Default wallpapers require no internet.
-- Export/import of configuration as JSON (excludes recent-activity history); diagnostics for app discovery, input discovery and API availability.
-- No Home interception, system patching, TV account access, custom screensaver or background service.
+## Start here: SDK already installed
 
-## Source of weather and wallpapers
+Read [Signing and installation](docs/INSTALL.md). On Windows, open PowerShell in this project folder:
 
-**Weather:** With weather enabled, the TV requests current temperature and WMO weather condition code from `https://api.open-meteo.com/v1/forecast` using the configured coordinates (default **London**). Location searches use `https://geocoding-api.open-meteo.com/v1/search`. The forecast is cached in local TV storage for about 30 minutes, falls back to the previous reading when offline and is not required for navigation. No TV GPS, IP-based geolocation or API key is used. Weather data: **Open-Meteo, CC BY 4.0**; geocoding locations from GeoNames. These APIs are free for non-commercial use subject to provider terms; review licensing before commercial redistribution.
-
-**Wallpapers:** `src/assets/wallpaper.jpg` is based on art generated during our UI-design conversation. `wallpaper-twilight.jpg` and `wallpaper-dawn.jpg` are locally processed variants of that same asset; they are bundled in the `.wgt` and never fetched from the internet. The Dark preset uses only CSS. If you manually enter a custom HTTPS image URL, the TV requests it directly from that source and that website can see the TV's network IP address. It is neither hosted nor proxied by Cinematic TV. Use a source you trust and have permission to display.
-
-## Build, sign and install
-
-Run `npm run build` to stage the complete Tizen web application in `dist/webapp`. This is a validated **unsigned project**; it is not an installable `.wgt`. To create a signed TV package using the Samsung Tizen Studio Web CLI and a profile bound to your TV, run `bash scripts/package-wgt.sh YOUR_PROFILE`. Signing is intentionally local; never commit or share your Samsung certificate passwords, private keys, TV DUID or remote access credentials. The build and hardware checks are documented in [docs/INSTALL.md](docs/INSTALL.md).
-
-The app has **no Home-button interception**. Potential startup and Home integrations are analysed, not implemented, in [docs/HOME-INTEGRATION.md](docs/HOME-INTEGRATION.md).
-
-## Use and test
-
-```bash
-npm run syntax
-npm test
-npm run preview
-# Browser-only acceptance tests (requires Python with Playwright and Chromium):
-npm run test:browser
+```powershell
+.\scripts\Tizen-Local.ps1 -Action Doctor -SdkRoot 'C:\tizen-studio'
+.\scripts\Tizen-Local.ps1 -Action Sign -SdkRoot 'C:\tizen-studio' -CertificateProfile 'CinematicTV'
+.\scripts\Tizen-Local.ps1 -Action Install -SdkRoot 'C:\tizen-studio' -TvAddress 'YOUR_TV_IPV4_ADDRESS'
 ```
 
-Open `http://localhost:8765` on a computer to try the browser demo. Arrow keys, Enter, Escape and held Enter approximate TV remote controls. Demo apps, demo inputs and simulated weather used for screenshots are **not** live TV data.
+`CinematicTV` must be an existing **Samsung → TV** certificate profile authorised for your television. Create it once through Certificate Manager and retain its author certificate for updates. The helper uses the profile by name; it does not need, read out or upload your password. `Install` uses the signed file from the preceding step, targets one exact IPv4 address, and runs the app after successful installation. It never scans your network, modifies Samsung system services or redirects Home.
 
-See [docs/INSTALL.md](docs/INSTALL.md) for signing, installing and reverting. A **Samsung TV certificate and Tizen Studio** are required for a signed `.wgt`. These are not included in the source ZIP.
+The supplied `dist/BUILD-MANIFEST.json` allows signing without Node/Python: the helper verifies the reviewed source hashes, builds in a temporary folder, signs through the official SDK, checks payload hashes and signature certificate metadata, and writes `signed/Cinematic-TV-0.4.0.wgt`. This inspection is not independent cryptographic verification of the Samsung certificate chain; the TV enforces certificate and DUID authorisation.
 
-## Organisation
+The helper has not been executed with Windows PowerShell or your SDK in this runtime. Direct SDK fallback commands are in the installation guide. Stop on an SDK error; do not bypass certificate validation.
 
-- `src/index.html` + `src/css/styles.css`: visual design, cards, views and focus states.
-- `src/js/model.js`: tested, backward-compatible settings and application model.
-- `src/js/platform.js`: isolated Samsung APIs for apps, HDMI sources and video plane.
-- `src/js/app.js`: navigation, local settings, history, favourites, edit mode and weather.
-- `src/config.xml`: Tizen TV Web-app manifest, privileges and network origins.
-- `tests/model.test.js`, `tests/platform.test.js`, `tests/browser-acceptance.py`, `tests/tizen-preview-acceptance.py`: unit and browser tests, including a mocked native HDMI video source.
-- `docs/`: installation, test evidence and hardware acceptance checklist.
+## Included in this candidate
 
-## Important limitations
+- Existing cinematic Home, native app icons when accessible and bounded fallbacks.
+- App/input pinning, HDMI naming and icons, direct D-pad reordering, scrolling favourites, search and hidden apps.
+- Recent-first focus and **Previous** Quick Switch using launches observed through this launcher.
+- Optional first-run setup, up to eight named Home profiles, granular resets and preference backup/import with JSON file and text routes.
+- Automatic local Dawn/Scenic/Twilight wallpaper, optional weather adaptation and reduced glass effects.
+- Open-Meteo weather with location/units, a 30-minute cache and a six-hour maximum stale fallback; network indicator explicitly reports browser link state, not internet reachability.
+- Optional live HDMI preview: default off; when enabled, defaults to the current TV source only. Preview may affect audio. Allowing temporary input switching requires a separate confirmation.
+- Serialised HDMI operations, timeout quarantine, late callback recovery, persistent interruption protection and an independent startup rescue control.
+- Single app-launch ownership, late-callback guards, held-OK handling, native key preservation and focus-safe catalogue refresh.
+- Installation/update catalogue listeners with cached fallback; diagnostics export and manual public release checks (the dedicated public repo is not yet available).
 
-- **Not tested on S95H hardware:** actual app IDs, icons, HDMI preview, TV source restoration, real remote long presses, native quick Settings and source integration.
-- **No signed TV package yet:** this is source code; installing on your actual TV requires local TV credentials and a signing profile.
-- **Live HDMI preview is experimental.** Switching its TVWindow source can affect the TV's video/audio state. Leave it off until full-screen input switching and cancellation have been tested. Static previews remain available.
-- **Streaming previews contain branding only**; they do not play other apps' live video or show private watch history.
-- **No replacement for Samsung Home:** system Home-button redirection and automatic launch are intentionally postponed until installation/recovery are validated. Samsung native Settings keys are not registered or overridden.
-- Custom wallpapers need an HTTPS host; per-domain allowlists are not practical when the user can enter arbitrary image domains. Network access is otherwise used only for weather/geocoding.
+## Deliberate boundaries
 
-## Credits
+Samsung Home/Settings keys remain native. There is no Home watcher, automatic startup service, private app screenshot capture, streaming video preview, unified Continue Watching, companion web server or automatic updater. These are separate integrations, not hidden incomplete functions. There is also no claim that fullscreen TVWindow preserves every PC gaming mode, HDR/VRR or sound configuration; test those on the television and use native Samsung Sources when necessary.
 
-Wallpapers derived from the illustration generated for this project; app branding belongs to the respective companies. UI and Tizen integration patterns were researched against Samsung's developer documentation and public projects [AeroTizen](https://github.com/helalaou/AeroTizen) and [B1ackha7TV](https://github.com/djwalks/B1ackha7TV). The application code is original rather than copied from those repositories.
+The model requested is QE48S95HHEXXU. Firmware/API behaviour must be recorded from the actual television. The manifest preserves `CinemTV001.Launcher` / `CinemTV001` and its existing minimum API declaration; older-TV compatibility is not certified.
+
+## Development checks
+
+Node.js 22+, Python 3.12+ and Playwright are needed for development tests, not for the installed application.
+
+```sh
+python -m pip install -r tests/requirements.txt
+python -m playwright install chromium
+npm run verify
+npm run test:served
+```
+
+`verify` includes source syntax, Node tests, unsigned staging, project-specific XML/resource validation and browser behaviour tests. The behaviour harness uses an offline HTML snapshot with mocked Tizen/network APIs; it removes CSP only in the fixture to load inline scripts in restricted hosts. `test:served` separately loads the unchanged source and CSP over localhost, and is required by CI. It was blocked by this session's browser policy, not counted as passed.
+
+The workflow runs from either this standalone project or the existing `cinematic-tv/` folder. Actions are commit-pinned, have read-only repository permission, and never access signing secrets. A workflow file is not evidence of a successful GitHub Actions run.
+
+## Assets and privacy
+
+Scenic, Dawn and Twilight are bundled images derived from the generated design artwork. They load locally. Custom wallpapers are optional public HTTPS image URLs; the host receives the TV's IP. The manifest permits user-selected external images, while CSP restricts scripts and fetch connections to self and the named API hosts. URL validation does not guarantee where a remote domain resolves; do not use untrusted hosts.
+
+Weather uses Open-Meteo forecast/geocoding, with manually selected coordinates (default London). No GPS or automatic IP geolocation is used. Open-Meteo requires attribution; its free service is for non-commercial usage subject to provider terms. Source: https://open-meteo.com/ and https://open-meteo.com/en/terms
+
+Preferences and local launch history stay on the TV. Backups contain your preferences and chosen weather location, but omit history and always restore with live preview off. Diagnostics are bounded/redacted; review an export before sharing it. Public repo publication requires a licence decision; this candidate does not grant a new software licence or redistribute other projects' code.
+
+See [comparison and readiness review](docs/review/READINESS.md), [test results](docs/TEST-RESULTS.md), [HDMI acceptance](docs/HDMI-ACCEPTANCE.md) and [local Codex handover](docs/LOCAL-CODEX-HANDOFF.md).

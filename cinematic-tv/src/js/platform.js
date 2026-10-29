@@ -5,155 +5,168 @@
   function error(cb, e) { if (typeof cb === 'function') cb(e && e.message ? e.message : String(e || 'Unsupported on this TV')); }
   function sameSource(a, b) { return !!(a && b && a.type === b.type && Number(a.number) === Number(b.number)); }
 
-  /* A single owner serialises TVWindow calls. HDMI video is a hardware plane, not an HTML
-   * video element. Only an explicit press of OK may open a source full-screen. */
+  /* One owner for the native plane. A timeout is uncertainty, not cancellation:
+   * quarantine further source commands until the native callback and cleanup settle. */
   function createVideoController(tv) {
-    var generation = 0, tail = Promise.resolve(), owner = 'none', visible = false;
-    var originalSource = null, previewSource = null, lastError = '', lastOperation = 'Idle';
-    var timeoutMs = 2400;
-    function enqueue(job) {
-      var task = tail.catch(function () {}).then(job);
-      tail = task.catch(function () {});
-      return task;
-    }
-    function setSource(s) {
-      return new Promise(function (resolve, reject) {
-        var settled = false, timer = setTimeout(function () { if (!settled) { settled = true; reject(new Error('HDMI source change timed out')); } }, timeoutMs);
-        function done() { if (settled) return; settled = true; clearTimeout(timer); resolve(); }
-        function fail(e) { if (settled) return; settled = true; clearTimeout(timer); reject(e || new Error('HDMI source change failed')); }
-        try { tv.setSource(s, done, fail, 'MAIN'); } catch (e) { fail(e); }
+    var generation=0, tail=Promise.resolve(), owner='none', visible=false;
+    var originalSource=null, previewSource=null, lastError='', lastOperation='Idle';
+    var blocked=false, pending=0, timeoutMs=2400;
+    function enqueue(job) { var task=tail.catch(function(){}).then(job); tail=task.catch(function(){}); return task; }
+    function failed(e) { lastError=e&&e.message?e.message:String(e);lastOperation='Video recovery required';blocked=true; }
+    function lateRecovery() {
+      enqueue(async function(){
+        if(pending)return false;
+        try { await finishOwned();return true; } catch(e){failed(e);return false;}
       });
     }
-    function show(rect) {
-      return new Promise(function (resolve, reject) {
-        var settled = false, timer = setTimeout(function () { if (!settled) { settled = true; reject(new Error('Video window timed out')); } }, timeoutMs);
-        function done() { if (settled) return; settled = true; clearTimeout(timer); resolve(); }
-        function fail(e) { if (settled) return; settled = true; clearTimeout(timer); reject(e || new Error('Video window failed')); }
-        try { tv.show(done, fail, rect, 'MAIN', 'FRONT'); } catch (e) { fail(e); }
+    function invoke(kind,start) {
+      return new Promise(function(resolve,reject){
+        var settled=false,timedOut=false;pending++;
+        var timer=setTimeout(function(){
+          if(settled)return;settled=true;timedOut=true;
+          var e=new Error('HDMI '+kind+' timed out; native completion is unknown');failed(e);reject(e);
+        },timeoutMs);
+        function complete(e) {
+          // Some firmware emits a callback twice. Only the first owns this operation.
+          if(complete.done)return;complete.done=true;pending--;clearTimeout(timer);
+          if(!e&&kind==='show')visible=true;
+          if(!e&&kind==='hide')visible=false;
+          if(timedOut){lateRecovery();return;}
+          if(settled)return;settled=true;if(e)reject(e);else resolve();
+        }
+        try {start(function(){complete();},function(e){complete(e||new Error('HDMI '+kind+' failed'));});}
+        catch(e){complete(e);}
       });
     }
-    function hide() {
-      return new Promise(function (resolve, reject) {
-        var settled = false, timer = setTimeout(function () { if (!settled) { settled = true; reject(new Error('Hide video timed out')); } }, timeoutMs);
-        function done() { if (settled) return; settled = true; clearTimeout(timer); resolve(); }
-        function fail(e) { if (settled) return; settled = true; clearTimeout(timer); reject(e || new Error('Hide video failed')); }
-        try { tv.hide(done, fail, 'MAIN'); } catch (e) { fail(e); }
-      });
-    }
-    async function finishPreview() {
-      if (owner !== 'preview' && !originalSource) return;
-      var initial = originalSource, failure = null;
-      // Always attempt both hide and restore, even if one operation fails.
-      if (visible) { try { await hide(); } catch (e) { failure = e; } }
-      visible = false;
-      if (initial) {
-        try {
-          var current = tv.getSource('MAIN');
-          // Do not undo a source change made outside this launcher, e.g. Samsung remote.
-          if (sameSource(current, previewSource) && !sameSource(current, initial)) await setSource(initial);
-        } catch (e) { failure = failure || e; }
+    function setSource(s){return invoke('source change',function(ok,fail){tv.setSource(s,ok,fail,'MAIN');});}
+    function show(rect){return invoke('show',function(ok,fail){tv.show(ok,fail,rect,'MAIN','FRONT');});}
+    function hide(){return invoke('hide',function(ok,fail){tv.hide(ok,fail,'MAIN');});}
+    async function finishOwned() {
+      if(pending)throw new Error('Native HDMI callback still pending; use Samsung Sources to recover');
+      if(owner==='none'&&!originalSource&&!visible)return;
+      var failure=null;
+      if(visible){try{await hide();}catch(e){failure=e;}}
+      if(originalSource&&!pending){
+        try{
+          var current=tv.getSource('MAIN');
+          // Source identity is the best public-API ownership signal, not proof that
+          // another application did not also select this same source.
+          if(sameSource(current,previewSource)&&!sameSource(current,originalSource))await setSource(originalSource);
+        }catch(e){failure=failure||e;}
       }
-      owner = 'none'; originalSource = null; previewSource = null;
-      if (failure) throw failure;
+      if(failure){failed(failure);throw failure;}
+      owner='none';originalSource=null;previewSource=null;
     }
-    function preview(source, rect, ok, fail) {
-      var token = ++generation;
-      if (!tv || !source || !Array.isArray(rect) || rect.length !== 4) {
-        error(fail, 'HDMI preview requires a connected TV source and a valid rectangle');
-        return Promise.resolve(false);
-      }
-      return enqueue(async function () {
-        if (token !== generation) return false;
-        if (owner === 'fullscreen') { error(fail, 'Close fullscreen input first'); return false; }
-        try {
-          if (owner !== 'preview') {
-            originalSource = tv.getSource('MAIN');
-            if (!originalSource) throw new Error('Cannot establish original source; preview skipped');
-            owner = 'preview';
+    function valid(source){return source && (source.type==='HDMI'||source.type==='TV') && Number.isInteger(Number(source.number)) && Number(source.number)>=0;}
+    function guard(fail){if(!tv||blocked||pending){error(fail,!tv?'HDMI API unavailable':'HDMI recovery required; preview is suspended');return false;}return true;}
+    function preview(source,rect,ok,fail){
+      var token=++generation;
+      if(!valid(source)||!Array.isArray(rect)||rect.length!==4){error(fail,'HDMI preview requires a valid source and rectangle');return Promise.resolve(false);}
+      return enqueue(async function(){
+        if(token!==generation||!guard(fail))return false;
+        if(owner==='fullscreen'){error(fail,'Close fullscreen input first');return false;}
+        try{
+          if(owner!=='preview'){
+            originalSource=tv.getSource('MAIN');if(!originalSource)throw new Error('Cannot establish original source');owner='preview';
           }
-          if (visible) { await hide(); visible = false; }
-          if (token !== generation) return false;
-          lastOperation = 'Changing preview source';
-          previewSource = source;
+          if(visible)await hide();
+          if(token!==generation)return false;
+          previewSource=source;lastOperation='Changing preview source';
           await setSource(source);
-          if (token !== generation) return false; // A queued cancellation restores the source.
-          lastOperation = 'Displaying HDMI thumbnail';
-          await show(rect);
-          visible = true;
-          if (token !== generation) return false;
-          lastOperation = 'HDMI preview active'; lastError = '';
-          if (ok) ok();
-          return true;
-        } catch (e) {
-          lastError = e.message || String(e); lastOperation = 'Preview unavailable';
-          if (token === generation) error(fail, e);
-          try { await finishPreview(); } catch (ignored) {}
+          if(token!==generation)return false;
+          lastOperation='Displaying HDMI thumbnail';await show(rect);
+          if(token!==generation)return false;
+          lastOperation='HDMI preview active';lastError='';if(ok)ok();return true;
+        }catch(e){
+          lastError=e.message||String(e);lastOperation='Preview unavailable';if(token===generation)error(fail,e);
+          if(!pending)try{await finishOwned();}catch(cleanup){failed(cleanup);}
           return false;
         }
       });
     }
-    function stopPreview() {
-      ++generation;
-      if (!tv) return Promise.resolve();
-      return enqueue(async function () {
-        if (owner === 'preview' || originalSource) {
-          lastOperation = 'Restoring source';
-          try { await finishPreview(); lastOperation = 'Preview stopped'; }
-          catch (e) { lastError = e.message || String(e); lastOperation = 'Restore failed'; }
-        }
+    function stopPreview(){
+      ++generation;if(!tv)return Promise.resolve(true);
+      return enqueue(async function(){
+        if(owner==='fullscreen')return true;
+        if(pending)return false;
+        try{await finishOwned();lastOperation=blocked?'Preview suspended after native error':'Preview stopped';return !blocked;}
+        catch(e){failed(e);return false;}
       });
     }
-    function openFullscreen(source, ok, fail) {
-      var token = ++generation;
-      if (!tv || !source) { error(fail, 'HDMI source unavailable'); return Promise.resolve(false); }
-      return enqueue(async function () {
-        if (token !== generation) return false;
-        try {
-          await finishPreview();
-          if (visible && owner === 'fullscreen') { await hide(); visible = false; owner = 'none'; }
-          if (token !== generation) return false;
-          lastOperation = 'Opening HDMI input';
-          await setSource(source);
-          owner = 'fullscreen';
-          if (token !== generation) return false;
-          await show(['0px', '0px', '1920px', '1080px']);
-          visible = true;
-          if (token !== generation) return false;
-          lastOperation = 'Fullscreen HDMI'; lastError = '';
-          if (ok) ok();
-          return true;
-        } catch (e) {
-          lastError = e.message || String(e); lastOperation = 'Fullscreen HDMI failed';
-          if (token === generation) error(fail, e);
+    function openFullscreen(source,ok,fail){
+      var token=++generation;
+      if(!valid(source)){error(fail,'HDMI source unavailable');return Promise.resolve(false);}
+      return enqueue(async function(){
+        if(token!==generation||!guard(fail))return false;
+        try{
+          await finishOwned();if(token!==generation)return false;
+          originalSource=tv.getSource('MAIN');if(!originalSource)throw new Error('Cannot establish original source');
+          previewSource=source;owner='fullscreen-pending';lastOperation='Opening HDMI input';
+          await setSource(source);if(token!==generation)return false;
+          await show(['0px','0px','1920px','1080px']);if(token!==generation)return false;
+          owner='fullscreen';originalSource=null;lastOperation='Fullscreen HDMI';lastError='';if(ok)ok();return true;
+        }catch(e){
+          lastError=e.message||String(e);lastOperation='Fullscreen HDMI failed';if(token===generation)error(fail,e);
+          if(!pending)try{await finishOwned();}catch(cleanup){failed(cleanup);}
           return false;
         }
       });
     }
-    function leaveFullscreen() {
-      ++generation;
-      if (!tv) return Promise.resolve();
-      return enqueue(async function () {
-        if (owner !== 'fullscreen') return;
-        try { if (visible) await hide(); lastOperation = 'Fullscreen HDMI closed'; }
-        catch (e) { lastError = e.message || String(e); lastOperation = 'Fullscreen exit failed'; }
-        visible = false; owner = 'none';
-        // Deliberate HDMI switch: do not silently return the input to the original source.
+    function leaveFullscreen(){
+      ++generation;if(!tv)return Promise.resolve(true);
+      return enqueue(async function(){
+        if(owner!=='fullscreen'&&owner!=='fullscreen-pending')return !blocked;
+        if(pending)return false;
+        try{await finishOwned();lastOperation='Fullscreen HDMI closed';return !blocked;}
+        catch(e){failed(e);return false;}
       });
     }
-    function status() { return {owner:owner, visible:visible, operation:lastOperation, lastError:lastError, sourceSaved:!!originalSource}; }
-    return {preview:preview, stopPreview:stopPreview, openFullscreen:openFullscreen, leaveFullscreen:leaveFullscreen, status:status};
+    function reset(){
+      ++generation;if(!tv)return Promise.resolve(false);
+      return enqueue(async function(){
+        if(pending)return false;
+        try{await finishOwned();blocked=false;lastError='';lastOperation='Video recovery completed';return true;}
+        catch(e){failed(e);return false;}
+      });
+    }
+    function status(){return{owner:owner,visible:visible,operation:lastOperation,lastError:lastError,sourceSaved:!!originalSource,blocked:blocked,pending:pending};}
+    return{preview:preview,stopPreview:stopPreview,openFullscreen:openFullscreen,leaveFullscreen:leaveFullscreen,reset:reset,status:status};
   }
 
+  function readWithTimeout(start,ok,fail,label){
+    var settled=false,timer=setTimeout(function(){if(settled)return;settled=true;error(fail,label+' timed out; cached information retained');},4000);
+    function success(value){if(settled)return;settled=true;clearTimeout(timer);ok(value);}
+    function failure(e){if(settled)return;settled=true;clearTimeout(timer);error(fail,e);}
+    try{start(success,failure);}catch(e){failure(e);}
+  }
+  function launchApp(id,ok,fail){
+    if(!isTV){error(fail,'Apps only launch on the Samsung TV');return;}
+    var settled=false,fallback=false;
+    function accepted(){if(settled)return;settled=true;if(ok)ok();}
+    function rejected(e){
+      if(settled)return;
+      if(!fallback&&e&&/^(NotSupportedError|NotFoundError|UnknownError)$/.test(e.name)&&t.ApplicationControl&&t.application.launchAppControl){
+        fallback=true;
+        try{t.application.launchAppControl(new t.ApplicationControl('http://tizen.org/appcontrol/operation/default',null,null,null,null,'SINGLE'),id,accepted,rejected);return;}catch(next){e=next;}
+      }
+      settled=true;error(fail,e);
+    }
+    try{t.application.launch(id,accepted,rejected);}catch(e){rejected(e);}
+  }
   var video = createVideoController(isTV && t.tvwindow ? t.tvwindow : null);
   var P = {
     isTV:isTV,
     currentId:function () { try { return t.application.getAppInfo().id; } catch (e) { return ''; } },
     getApps:function (ok, fail) { if (!isTV) { ok(P.demoApps()); return; }
-      try { t.application.getAppsInfo(ok, function (e) { error(fail, e); }); } catch (e) { error(fail, e); } },
-    launch:function (id, ok, fail) { if (!isTV) { error(fail, 'Apps only launch on the Samsung TV'); return; }
-      try { t.application.launch(id, function () { if (ok) ok(); }, function (e) { error(fail, e); }); } catch (e) { error(fail, e); } },
+      readWithTimeout(function(done,reject){t.application.getAppsInfo(done,reject);},ok,fail,'Application discovery'); },
+    launch:launchApp,
     listInputs:function (ok, fail) { if (!isTV) { ok(P.demoInputs()); return; }
-      try { t.systeminfo.getPropertyValue('VIDEOSOURCE', ok, function (e) { error(fail, e); }); } catch (e) { error(fail, e); } },
+      readWithTimeout(function(done,reject){t.systeminfo.getPropertyValue('VIDEOSOURCE',done,reject);},ok,fail,'Input discovery'); },
+    watchApps:function(cb){
+      if(!isTV||!t.package||!t.package.setPackageInfoEventListener)return function(){};
+      try{t.package.setPackageInfoEventListener({oninstalled:cb,onupdated:cb,onuninstalled:cb});return function(){try{t.package.unsetPackageInfoEventListener();}catch(e){}};}
+      catch(e){return function(){};}
+    },
     watchInputs:function (cb) { if (!isTV) return function () {};
       try { var id = t.systeminfo.addPropertyValueChangeListener('VIDEOSOURCE', cb); return function () { try { t.systeminfo.removePropertyValueChangeListener(id); } catch (e) {} }; }
       catch (e) { return function () {}; } },
@@ -170,6 +183,8 @@
     showInputFullscreen:function (source, ok, fail) { return video.openFullscreen(source, ok, fail); },
     leaveFullscreen:function () { return video.leaveFullscreen(); },
     videoStatus:function () { return video.status(); },
+    resetVideo:function () { return video.reset(); },
+    currentSource:function () { try{return t.tvwindow.getSource('MAIN');}catch(e){return null;} },
     exit:function () { if (!isTV) return; try { t.application.getCurrentApplication().exit(); } catch (e) {} },
     demoApps:function () { return ['YouTube','Crunchyroll','Apple TV','Netflix','Paramount+','Disney+','Prime Video','Hue Sync','BBC iPlayer','ITVX','Channel 4','5','Spotify','Plex','Twitch','SmartThings','Samsung Health'].map(function (n,i) { return {id:'demo.' + i,name:n,show:true}; }); },
     demoInputs:function () { return {connected:[{type:'HDMI',number:1,editName:'PC'}],disconnected:[{type:'HDMI',number:2},{type:'HDMI',number:3},{type:'HDMI',number:4}]}; },

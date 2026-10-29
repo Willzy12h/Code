@@ -1,22 +1,28 @@
-# Cinematic TV v0.3.0 — validation record
+# Cinematic TV 0.4.0 — validation record
 
-Date: 28 October 2026. Target: Samsung QE48S95HHEXXU (2026 S95H, Tizen 10).
+## Executed in the chat runtime
 
-## Executed in container
+- Node.js v22.16.0 source/build syntax checks: passed.
+- Node regression suite: **52 tests passed, 0 failed, 0 skipped**.
+- Unsigned build: **12 runtime files**, including icon, recovery and feature modules; per-file SHA-256 manifest generated.
+- Project-specific XML, app identity, public-privilege and resource checks: passed. This is not the Samsung SDK validator.
+- Existing browser acceptance: passed (navigation, favourites/HDMI pinning, reorder, search/hide, weather location/settings).
+- Asynchronous TVWindow mock acceptance: passed (thumbnail, source restoration, explicit fullscreen, return).
+- Additional readiness browser suite: **16 scenarios passed**, including hold/double OK, launch timeout late callback, native keys, hotplug-edit focus, input pinning without catalogue, backup, interruption recovery and text Backspace.
+- Browser mode: offline snapshot of application files, with Tizen/weather mocks and CSP removed in the test fixture solely to load scripts inline. Browser JavaScript results are not native TV results.
 
-- `npm run syntax` — PASS, model/platform/app JavaScript parses.
-- `npm test` — PASS, 22/22 Node.js tests, including 12 focused TVWindow-controller tests (serialisation, source restore, rapid focus, delayed callback cancellation, fullscreen separation, external source changes, failure reporting).
-- `npm run test:browser` — PASS for browser UI acceptance plus simulated asynchronous native Tizen TVWindow test (thumbnail display, leaving focus, restore and fullscreen switch). These do NOT prove hardware behaviour.
-- `npm run build` — PASS, 10 unsigned web application files staged in `dist/webapp`; hashes saved in `dist/BUILD-MANIFEST.json`.
-- `src/config.xml` XML syntax verified and required assets referenced by the staged project verified. Package version: 0.3.0.
+## Blocked / not performed
 
-## Not performed / limitations
+- Unchanged-origin HTTP/CSP smoke test: **BLOCKED**, `net::ERR_BLOCKED_BY_ADMINISTRATOR` for localhost. File navigation also blocked. The test reports this separately and CI uses `--required` to make it a failure, not a pass.
+- Samsung SDK download was attempted before learning the SDK was already installed on the user's PC; the chat host could not resolve the SDK download host. No SDK/emulator ran here.
+- Windows PowerShell helper has not been executed or parsed by PowerShell in this runtime. A parser gate is supplied in CI; direct documented CLI commands are included as fallback.
+- Samsung account login, author/distributor certificate creation, WGT signing, trust/DUID acceptance, physical TV install and picture/audio/remote acceptance: **not performed here**.
+- No Home interception, production release or TV daily-driver certification.
 
-- **No installable signed `.wgt`**: the environment lacks Samsung Tizen Studio Web CLI and a TV-specific certificate profile.
-- No installation or testing on the physical S95H. HDMI live video/audio, video-plane clipping, Samsung Settings overlay, HDMI-CEC, remote press timing, app-specific native IDs and official Tizen runtime compatibility remain untested.
-- No Home interception, startup watcher, system patches, Smart Hub removal or default-launcher replacement implemented.
-- The browser demo uses simulated apps, HDMI sources and weather data. Weather connectivity and custom HTTPS images have not been tested from the television.
+## Evidence
+
+The candidate's evidence folder contains the final gate output and separate blocked-origin output. Earlier RED/GREEN logs are retained in the working session; new regressions were exercised failing before correction. The signing helper's package inspection checks payload hashes and certificate metadata, not independent XMLDSig or Samsung-chain cryptographic validity.
 
 ## Result
 
-Version 0.3.0 is a validated unsigned source/staging build with implemented native HDMI-preview code and automated mock coverage. It is **a candidate for the first signed S95H acceptance test**, not a confirmed daily-driver or signed installable release.
+A locally tested **installation candidate ready for local signing**. It is not a signed or hardware-verified release. The user already has the SDK; the remaining signing inputs are the authorised Samsung TV certificate-profile name and local TV connection.

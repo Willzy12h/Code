@@ -1,0 +1,16 @@
+{
+  "name": "Cinematic TV",
+  "version": "0.4.0",
+  "status": "installation candidate; unsigned; hardware not tested",
+  "base_remote": "Willzy12h/Code@gpt/cinematic-tv-v0.3.0",
+  "base_remote_commit": "3974fdfa29539bc5eb6b31b48d6d39e3fbf43040",
+  "node_tests": 52,
+  "node_failures": 0,
+  "additional_browser_scenarios": 16,
+  "sdk_executed": false,
+  "signed_wgt": false,
+  "physical_tv_tested": false,
+  "served_origin_test": "blocked by browser policy in this runtime; required in CI/local acceptance",
+  "powershell_helper": "provided; not executed in this runtime",
+  "final_source_publication": "published on Willzy12h/Code gpt/cinematic-tv-v0.4.0; not merged or signed"
+}

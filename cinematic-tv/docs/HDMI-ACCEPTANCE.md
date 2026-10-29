@@ -1,6 +1,6 @@
 # Live HDMI acceptance checklist — Samsung QE48S95HHEXXU
 
-**Implementation:** v0.3.0 includes an opt-in native TVWindow HDMI thumbnail and explicit fullscreen input switching. It is not yet hardware-validated. Use a locally signed test package. Video-plane overlay, CEC, audio and Samsung firmware behaviour cannot be confirmed using Chromium or a JavaScript mock.
+**Implementation:** v0.4.0 includes an opt-in native TVWindow HDMI thumbnail and explicit fullscreen input switching. It is not yet hardware-validated. Use a locally signed test package. Video-plane overlay, CEC, audio and Samsung firmware behaviour cannot be confirmed using Chromium or a JavaScript mock.
 
 ## Safe test order
 
@@ -24,3 +24,9 @@
 ## API design
 
 Calls to `tizen.tvwindow.setSource`, `show`, `hide` and source restoration are serialised. A new selection invalidates older preview requests; app launch waits for cleanup; the previous source is only restored if Cinematic TV still owns the preview source. `show` uses the `MAIN` video window and `FRONT` z-position at the measured preview-card rectangle. This follows Samsung's documented TVWindow API shape but is not a claim of hardware compatibility.
+
+## v0.4.0 additional gates
+
+Preview defaults to current-source-only after opt-in. Highlighting another input must show an Open instruction, not silently change source. Temporary-switch preview is a separately confirmed experimental choice. After a native timeout, no new source command should run until the outstanding callback and cleanup settle. Use Recover HDMI only for explicit recovery; pending native completion must remain a failure. An interrupted preview marker disables preview on the next startup.
+
+Test PC resolution/text, refresh rate, HDR, VRR/Game Mode and sound output before relying on embedded fullscreen. The app does not claim these match Samsung's native source mode. Verify the TV's own idle/screensaver behaviour; the launcher never disables it or implements a replacement.

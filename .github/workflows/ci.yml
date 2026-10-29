@@ -1,27 +1,51 @@
 name: Cinematic TV validation
 on:
   push:
-    paths:
-      - 'cinematic-tv/**'
-      - '.github/workflows/ci.yml'
+    paths: ['cinematic-tv/**', 'src/**', 'scripts/**', 'tests/**', 'package.json', '.github/workflows/ci.yml']
+  pull_request:
+    paths: ['cinematic-tv/**', 'src/**', 'scripts/**', 'tests/**', 'package.json', '.github/workflows/ci.yml']
   workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: cinematic-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
-  test:
+  validation:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: cinematic-tv
+    timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - name: Detect project layout
+        run: |
+          if [ -f cinematic-tv/package.json ]; then echo 'PROJECT=cinematic-tv' >> "$GITHUB_ENV"; else echo 'PROJECT=.' >> "$GITHUB_ENV"; fi
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: '22'
-      - run: npm run syntax
-      - run: npm test
-      - run: npm run build
-      - uses: actions/upload-artifact@v4
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
         with:
-          name: cinematic-tv-unsigned-webapp
-          path: cinematic-tv/dist/
+          python-version: '3.12'
+      - name: Browser test tooling
+        run: |
+          python -m pip install -r "$PROJECT/tests/requirements.txt"
+          python -m playwright install --with-deps chromium
+      - name: Syntax, unit, manifest and behaviour gates
+        run: cd "$PROJECT" && npm run verify
+      - name: Real-origin resource and CSP smoke test
+        run: cd "$PROJECT" && npm run test:served
+      - name: Parse Windows signing helper
+        shell: pwsh
+        run: |
+          $tokens = $null; $errors = $null
+          $script = Join-Path $env:PROJECT 'scripts/Tizen-Local.ps1'
+          $null = [System.Management.Automation.Language.Parser]::ParseFile($script, [ref]$tokens, [ref]$errors)
+          if ($errors.Count -gt 0) { $errors | Format-List; throw 'PowerShell syntax errors' }
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: cinematic-tv-unsigned-webapp-${{ github.sha }}
+          path: ${{ env.PROJECT }}/dist/
           if-no-files-found: error
-# This workflow does not sign or publish a .wgt. Keep TV-specific certificates private.
+          retention-days: 7
+# No Samsung credentials, signing, releases, privileged pull_request_target or system modifications.

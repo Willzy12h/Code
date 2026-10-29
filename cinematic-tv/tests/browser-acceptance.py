@@ -2,31 +2,15 @@
 from pathlib import Path
 from playwright.sync_api import sync_playwright
 import re,base64,json
-root=Path(__file__).parents[1]
-html=(root/'src/index.html').read_text()
-css=(root/'src/css/styles.css').read_text()
-scenery={}
-for name in ('wallpaper.jpg','wallpaper-twilight.jpg','wallpaper-dawn.jpg'):
-    uri='data:image/jpeg;base64,'+base64.b64encode((root/'src/assets'/name).read_bytes()).decode()
-    scenery[name]=uri
-    css=css.replace("url('../assets/"+name+"')", "url('"+uri+"')")
-html=re.sub(r'<link[^>]*stylesheet[^>]*>', '<style>'+css+'</style>',html)
-for name in ['model','platform','app']:
-    script=(root/'src/js'/ (name+'.js')).read_text()
-    for filename,uri in scenery.items():
-        script=script.replace("'assets/"+filename+"'", "'"+uri+"'")
-    html=html.replace('<script src="js/'+name+'.js"></script>', '<script>'+script+'</script>')
+from ui_support import ROOT as root, chromium, prepare, render
 errors=[]
 with sync_playwright() as p:
-    browser=p.chromium.launch(executable_path='/usr/bin/chromium',headless=True,args=['--no-sandbox','--disable-dev-shm-usage'])
+    browser=chromium(p)
     page=browser.new_page(viewport={'width':1920,'height':1080},device_scale_factor=1)
     page.on('pageerror',lambda e:errors.append(str(e)))
-    page.evaluate("""() => {
-      Object.defineProperty(window,'localStorage',{configurable:true,value:{_data:{},getItem(k){return this._data[k]||null},setItem(k,v){this._data[k]=v},removeItem(k){delete this._data[k]}}});
-      window.fetch=(url)=>Promise.resolve({ok:true,json:()=>Promise.resolve(String(url).includes('geocoding')?{results:[{name:'Ealing',admin1:'England',country:'United Kingdom',latitude:51.51,longitude:-.30}]}:{current:{temperature_2m:13,weather_code:2}})});
-    }""")
-    page.set_content(html,wait_until='domcontentloaded')
-    page.wait_for_timeout(150)
+    prepare(page)
+    render(page)
+    page.wait_for_timeout(180)
     assert page.locator('#favourites .app-card').count()==8
     assert page.locator('#recent-list .navitem').count()==4
     assert page.locator('.is-focused').first.get_attribute('data-itemid')=='input:HDMI:1'
@@ -96,6 +80,6 @@ with sync_playwright() as p:
     assert page.locator('#apps-grid .app-card.hidden-app').count()==1
     page.screenshot(path=str(root/'all-apps-v0.2.0.png'),full_page=True)
     assert not errors,errors
-    print(json.dumps({'result':'PASS','home_favourites_after_pin':9,'app_catalogue':17,'settings_count':22,'browser_js_errors':errors},indent=2))
+    print(json.dumps({'result':'PASS','home_favourites_after_pin':9,'app_catalogue':17,'settings_count':page.locator('#settings-list .setting-row').count(),'browser_js_errors':errors},indent=2))
     browser.close()
 
