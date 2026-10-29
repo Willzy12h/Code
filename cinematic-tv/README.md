@@ -6,9 +6,10 @@ A personal, remote-first Samsung Tizen TV launcher. The agreed Cinematic Spotlig
 
 ## Start here: SDK already installed
 
-Read [Signing and installation](docs/INSTALL.md). On Windows, open PowerShell in this project folder:
+The GitHub feature branch is authoritative; ignore the older ZIP/patch. See [Windows validation](docs/LOCAL-VALIDATION.md) for current evidence and [Signing and installation](docs/INSTALL.md) for setup. On Windows, open PowerShell in this project folder and generate the ignored staging first:
 
 ```powershell
+npm run build
 .\scripts\Tizen-Local.ps1 -Action Doctor -SdkRoot 'C:\tizen-studio'
 .\scripts\Tizen-Local.ps1 -Action Sign -SdkRoot 'C:\tizen-studio' -CertificateProfile 'CinematicTV'
 .\scripts\Tizen-Local.ps1 -Action Install -SdkRoot 'C:\tizen-studio' -TvAddress 'YOUR_TV_IPV4_ADDRESS'
@@ -16,9 +17,9 @@ Read [Signing and installation](docs/INSTALL.md). On Windows, open PowerShell in
 
 `CinematicTV` must be an existing **Samsung → TV** certificate profile authorised for your television. Create it once through Certificate Manager and retain its author certificate for updates. The helper uses the profile by name; it does not need, read out or upload your password. `Install` uses the signed file from the preceding step, targets one exact IPv4 address, and runs the app after successful installation. It never scans your network, modifies Samsung system services or redirects Home.
 
-The supplied `dist/BUILD-MANIFEST.json` allows signing without Node/Python: the helper verifies the reviewed source hashes, builds in a temporary folder, signs through the official SDK, checks payload hashes and signature certificate metadata, and writes `signed/Cinematic-TV-0.4.0.wgt`. This inspection is not independent cryptographic verification of the Samsung certificate chain; the TV enforces certificate and DUID authorisation.
+After `npm run build` generates `dist/BUILD-MANIFEST.json`, signing does not need Node/Python: the helper verifies the reviewed source hashes, builds in a temporary folder, signs through the official SDK, checks payload hashes and signature certificate metadata, and writes `signed/Cinematic-TV-0.4.0.wgt`. This inspection is not independent cryptographic verification of the Samsung certificate chain; the TV enforces certificate and DUID authorisation.
 
-The helper has not been executed with Windows PowerShell or your SDK in this runtime. Direct SDK fallback commands are in the installation guide. Stop on an SDK error; do not bypass certificate validation.
+The helper parser and Doctor have passed locally in Windows PowerShell 5.1 with the installed SDK. Signing and hardware acceptance remain separate gates. Direct SDK fallback commands are in the installation guide. Stop on an SDK error; do not bypass certificate validation.
 
 ## Included in this candidate
 
@@ -50,7 +51,7 @@ npm run verify
 npm run test:served
 ```
 
-`verify` includes source syntax, Node tests, unsigned staging, project-specific XML/resource validation and browser behaviour tests. The behaviour harness uses an offline HTML snapshot with mocked Tizen/network APIs; it removes CSP only in the fixture to load inline scripts in restricted hosts. `test:served` separately loads the unchanged source and CSP over localhost, and is required by CI. It was blocked by this session's browser policy, not counted as passed.
+`verify` includes source syntax, Node tests, unsigned staging, project-specific XML/resource validation and browser behaviour tests. The behaviour harness uses an offline HTML snapshot with mocked Tizen/network APIs; it removes CSP only in the fixture to load inline scripts in restricted hosts. `test:served` separately loads the unchanged source and CSP over localhost, and is required by CI. It was blocked in the earlier chat runtime; it now passes on the local Windows PC (see the Windows validation record).
 
 The workflow runs from either this standalone project or the existing `cinematic-tv/` folder. Actions are commit-pinned, have read-only repository permission, and never access signing secrets. A workflow file is not evidence of a successful GitHub Actions run.
 

@@ -1,3 +1,5 @@
+> Update, 29 October 2026: GitHub branch `gpt/cinematic-tv-v0.4.0` is authoritative. The older ZIP/patch and earlier environment limitations below are historical. See [Windows validation](LOCAL-VALIDATION.md) for independently rerun local checks and outstanding signing/hardware acceptance.
+
 # Local Windows SDK / Codex handover
 
 Run this in a local Codex/IDE session opened in the extracted project folder, not in a cloud environment. The SDK is already installed. This chat runtime has no connection to the user's PC or local TV network.

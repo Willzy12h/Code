@@ -1,3 +1,5 @@
+> Update, 29 October 2026: GitHub branch `gpt/cinematic-tv-v0.4.0` is authoritative. The older ZIP/patch and earlier environment limitations below are historical. See [Windows validation](LOCAL-VALIDATION.md) for independently rerun local checks and outstanding signing/hardware acceptance.
+
 # Cinematic TV 0.4.0 — validation record
 
 ## Executed in the chat runtime

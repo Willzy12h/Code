@@ -11,6 +11,14 @@ with server() as url, sync_playwright() as p:
     def fresh(settings=None,native=False):
         page=browser.new_page(viewport={'width':1920,'height':1080})
         prepare(page,settings,native);render(page);page.wait_for_timeout(180);return page
+    def static_caption():
+        page=fresh()
+        monitor=page.locator('#preview-art .monitor-mock').bounding_box()
+        caption=page.locator('#preview-art .art-caption').bounding_box()
+        assert monitor and caption
+        assert monitor['y']+monitor['height']<=caption['y'], 'Static PC artwork overlaps its caption'
+        page.close()
+    case('Static PC artwork leaves its caption unobscured',static_caption)
     def held_setting():
         page=fresh();page.keyboard.press('ArrowUp');page.keyboard.down('Enter');page.wait_for_timeout(230);page.keyboard.up('Enter')
         assert page.locator('#page-title').inner_text()=='Launcher Settings';page.close()

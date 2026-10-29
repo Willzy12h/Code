@@ -44,14 +44,14 @@ def click(page,action):page.locator('button[data-action="'+action+'"]').first.cl
 
 def render(page):
     """Offline snapshot of unchanged source text; no HTTP browser access is allowed in the host."""
-    html=(ROOT/'src/index.html').read_text()
-    css=(ROOT/'src/css/styles.css').read_text()
+    html=(ROOT/'src/index.html').read_text(encoding='utf-8')
+    css=(ROOT/'src/css/styles.css').read_text(encoding='utf-8')
     for n in ['wallpaper.jpg','wallpaper-dawn.jpg','wallpaper-twilight.jpg']:
         data='data:image/jpeg;base64,'+base64.b64encode((ROOT/'src/assets'/n).read_bytes()).decode()
         css=css.replace("../assets/"+n,data)
     html=re.sub(r'<link[^>]*stylesheet[^>]*>','<style>'+css+'</style>',html)
     for name in re.findall(r'<script src="(js/[^"]+)"',html):
-        code=(ROOT/'src'/name).read_text()
+        code=(ROOT/'src'/name).read_text(encoding='utf-8')
         for image in ['wallpaper.jpg','wallpaper-dawn.jpg','wallpaper-twilight.jpg']:
             uri='data:image/jpeg;base64,'+base64.b64encode((ROOT/'src/assets'/image).read_bytes()).decode()
             code=code.replace("'assets/"+image+"'","'"+uri+"'")

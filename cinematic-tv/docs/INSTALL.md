@@ -19,7 +19,7 @@ Official references:
 
 ## 2. Windows helper
 
-Extract the complete candidate ZIP and open PowerShell in the directory containing `package.json`, `src` and `scripts`. These commands assume `C:\tizen-studio`; change that path only if your SDK is elsewhere.
+Check out the authoritative `gpt/cinematic-tv-v0.4.0` branch and open PowerShell in `cinematic-tv`, containing `package.json`, `src` and `scripts`. Run `npm run build` first: `dist/` is ignored and is not supplied by GitHub. See [Windows validation](LOCAL-VALIDATION.md) for current checks. These commands assume `C:\tizen-studio`; change that path only if your SDK is elsewhere.
 
 ```powershell
 .\scripts\Tizen-Local.ps1 -Action Doctor -SdkRoot 'C:\tizen-studio'
@@ -48,7 +48,7 @@ The helper is included for local execution; Windows PowerShell, Samsung SDK pack
 
 ## 3. Direct SDK commands (fallback)
 
-The supplied `dist\webapp` folder already contains the unsigned app; no Node build is needed unless the source is edited. In PowerShell:
+Run `npm run build` to generate the unsigned `dist\webapp` folder from this checkout. In PowerShell:
 
 ```powershell
 $Tizen = 'C:\tizen-studio\tools\ide\bin\tizen.bat'
