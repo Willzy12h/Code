@@ -182,6 +182,20 @@
           try{if(a&&typeof a.id==='string')apps.push({id:a.id,name:typeof a.name==='string'?a.name:'',iconPath:typeof a.iconPath==='string'?a.iconPath:'',show:a.show===true,packageId:typeof a.packageId==='string'?a.packageId:'',categories:Array.isArray(a.categories)?a.categories.filter(function(c){return typeof c==='string';}).slice(0,20):[]});}catch(e){}
         });done(apps);
       },reject);},ok,fail,'Application discovery'); },
+    // Samsung's SDK script is local to the TV. This optional query is undocumented;
+    // feature-detect it and fail closed rather than guessing a foreground app.
+    prepareReturn:function(){
+      function available(){return !!(w.webapis&&w.webapis.appcommon&&typeof w.webapis.appcommon.getForegroundAppId==='function');}
+      if(available())return Promise.resolve(true);
+      if(!isTV)return Promise.resolve(false);
+      return new Promise(function(resolve){var script=document.createElement('script'),done=false;
+        var timer=setTimeout(function(){finish(false);},3000);
+        function finish(ok){if(done)return;done=true;clearTimeout(timer);script.onload=script.onerror=null;resolve(ok);}
+        script.onload=function(){finish(available());};script.onerror=function(){finish(false);};
+        script.src='$WEBAPIS/webapis/webapis.js';document.head.appendChild(script);
+      });
+    },
+    foregroundId:function(){return w.webapis.appcommon.getForegroundAppId();},
     launch:launchApp,
     listInputs:function (ok, fail) { if (!isTV) { ok(P.demoInputs()); return; }
       readWithTimeout(function(done,reject){t.systeminfo.getPropertyValue('VIDEOSOURCE',done,reject);},ok,fail,'Input discovery'); },

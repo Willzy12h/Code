@@ -1,3 +1,5 @@
+> 0.4.6 update: the user has authorised an optional background-return trial, documented in [TV feedback 0.4.6](TV-FEEDBACK-0.4.6.md). Internal Home configuration changes remain unauthorised. Earlier conclusions below describe the 0.4.5 investigation.
+
 # Startup and automatic return: read-only proposal
 
 No Home remapping, background worker, service or system configuration change has been implemented. This review accompanies the independent 0.4.5 UI update. It is not evidence that a community method works on the S95H.

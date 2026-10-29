@@ -1,7 +1,7 @@
 /* Cinematic TV v0.4 — remote-first Samsung TV launcher. */
 (function(w,doc){
   'use strict';
-  var M=w.LauncherModel,P=w.LauncherPlatform,F=w.LauncherFeatures,U=w.LauncherPresentation,VERSION='0.4.5';
+  var M=w.LauncherModel,P=w.LauncherPlatform,F=w.LauncherFeatures,U=w.LauncherPresentation,VERSION='0.4.6';
   var STORAGE='cinematic-tv-v1', APP_CACHE='cinematic-tv-apps-v2', WEATHER_CACHE='cinematic-tv-weather-v1';
   function storageGet(key){try{return localStorage.getItem(key);}catch(e){return null;}}
   var state=M.load(storageGet(STORAGE)),page='home',filter='All',searchTerm='',selected=null,modalOpen=false,modalReturn=null;
@@ -17,6 +17,44 @@
   var q=function(s){return doc.querySelector(s);};
   var qa=function(s){return Array.prototype.slice.call(doc.querySelectorAll(s));};
   function el(tag,cls,text){var e=doc.createElement(tag);if(cls)e.className=cls;if(text!==undefined)e.textContent=text;return e;}
+  var returnWorker=null,returnSetup=0,returnCleanup=Promise.resolve(true);
+  var returnMode=w.LauncherReturn.create({now:Date.now,hidden:function(){return doc.hidden;},
+    foreground:function(){return P.foregroundId();},
+    launch:function(ok,fail){var token=returnSetup;returnCleanup.then(function(clean){
+      if(token!==returnSetup||!returnMode.status().enabled||returnMode.status().paused){ok();return;}
+      if(!clean){fail();return;}
+      try{if(!doc.hidden||P.foregroundId()!=='com.samsung.tv.csfs'){ok();return;}
+        var id=P.currentId();if(!id){fail();return;}P.launch(id,ok,fail);
+      }catch(e){fail();}
+    },fail);},
+    stop:function(){if(returnWorker){returnWorker.terminate();returnWorker=null;}},
+    fault:function(reason){setReturnPreference(false);logEvent('Background return',reason);},
+    log:function(detail){logEvent('Background return',detail);}
+  });
+  function setReturnPreference(on){try{localStorage.setItem('cinematic-tv-return-enabled',on?'1':'0');return true;}catch(e){return false;}}
+  function startReturnWorker(){
+    if(returnWorker||!returnMode.status().enabled||returnMode.status().paused)return;
+    try{returnWorker=new Worker('js/return-worker.js');returnWorker.onmessage=function(){returnMode.tick();};
+      returnWorker.onerror=function(){returnMode.disable('Background worker failed; return disabled');};
+    }catch(e){returnMode.disable('Background worker unavailable; return disabled');}
+  }
+  function configureReturn(on){
+    var token=++returnSetup;returnMode.disable();setReturnPreference(false);
+    if(!on)return Promise.resolve(false);
+    return P.prepareReturn().then(function(available){
+      if(token!==returnSetup)return false;
+      if(!available||!P.currentId()){returnMode.disable('Foreground API unavailable; return disabled');return false;}
+      if(!setReturnPreference(true))return false;
+      returnMode.enable();startReturnWorker();return returnMode.status().enabled;
+    });
+  }
+  function openSamsungHome(){
+    ++returnSetup;returnMode.pause();
+    stopVideoPreview().then(function(clean){
+      if(!clean){toast('HDMI cleanup is unconfirmed; press Samsung Home');return;}
+      P.launch('com.samsung.tv.csfs',function(){},function(){toast('Press the remote Home button; automatic return is paused');});
+    });
+  }
   function save(){try{localStorage.setItem(STORAGE,JSON.stringify(state));}catch(e){toast('Settings could not be saved');}}
   function toast(message){var t=q('#toast');t.textContent=message;t.classList.add('visible');clearTimeout(toastTimer);toastTimer=setTimeout(function(){t.classList.remove('visible');},2300);}
   function logEvent(event,detail){
@@ -518,14 +556,18 @@
     'App discovery API: '+(p.appDiscovery?'Present':'Not available'),'HDMI preview API: '+(p.hdmiPreview?'Present':'Not available'),'Video state: '+p.video.operation+' / '+p.video.owner,'Video error: '+(p.video.lastError||'None'),
     'Preview setting: '+state.previewMode,'Weather: '+weatherStatus,'Weather error: '+(weatherError||'None'),'Wallpaper: '+wallpaperStatus,'App viewport: '+w.innerWidth+'×'+w.innerHeight+' (Samsung app UI limit: 1920×1080)',
     'Native Samsung Settings: handled by TV remote, not intercepted',
+    'Background return: '+JSON.stringify(returnMode.status()),
     'Last error: '+(diagnostics.error||'None')];
     modal('Diagnostics',s.join('  •  '),[{label:'Close',fn:function(){}}]);}
   function settingAction(name){var focus={action:name};
     if(name==='setting-dimming'){state.autoDimming=!state.autoDimming;save();applyAppearance();showPage('settings',focus);refreshWeather();return;}
     if(name==='setting-manage-hidden'){manageHiddenApps();return;}
     if(name==='setting-startup'){
-      modal('Startup and exit','Samsung All Settings → Advanced Features (or General & Privacy) → Start Screen Options. If Autorun Last App is available, turn it on and leave Cinematic TV as the last app before standby. Turn it off in the same menu to disable it. Support depends on the model and app; this launcher cannot promise autorun. Samsung Home remains available.',[
-        {label:'Exit Cinematic TV',fn:function(){stopVideoPreview().then(function(){P.exit();});}},
+      var status=returnMode.status();
+      modal('Startup and exit','Optional experimental return reopens Cinematic TV when Samsung Home is detected. It does not replace Home or guarantee startup. Return is '+(status.enabled?(status.paused?'paused until you reopen Cinematic TV':'On'):'Off')+'. Open Samsung Home below pauses return until you manually reopen Cinematic TV. Back from this launcher exits normally. '+(status.error||''),[
+        {label:status.enabled?'Disable background return':'Enable background return (experimental)',fn:function(){configureReturn(!status.enabled).then(function(on){toast(on?'Background return enabled':status.enabled?'Background return disabled':'Return unavailable or disabled');settingAction('setting-startup');});}},
+        {label:'Open Samsung Home and pause return',fn:openSamsungHome},
+        {label:'Exit Cinematic TV',fn:function(){++returnSetup;returnMode.pause();stopVideoPreview().then(function(){P.exit();});}},
         {label:'Close',fn:function(){}}
       ]);return;
     }
@@ -581,7 +623,7 @@
     else if(name==='setting-backup'){backupSettings();return;}
     else if(name==='setting-reset'){
       modal('Reset Cinematic TV?','This clears local configuration, favourite order, hidden apps and recent history. Samsung settings remain untouched.',[
-        {label:'Reset',fn:function(){clearUndo();state=M.defaults();save();applyAppearance();refreshData(true);}},
+        {label:'Reset',fn:function(){configureReturn(false);clearUndo();state=M.defaults();save();applyAppearance();refreshData(true);}},
         {label:'Cancel',fn:function(){}}
       ]);return;
     }else return;
@@ -636,7 +678,7 @@
     if(back){e.preventDefault();clearTimeout(enterTimer);enterDown=false;
       if(modalOpen){hideModal(true);return;}if(page!=='home'){editingFromApps=false;showPage('home');return;}
       // Standard Samsung app Back behaviour: exit only from the home screen.
-      stopVideoPreview().then(function(){P.exit();});}
+      ++returnSetup;returnMode.pause();stopVideoPreview().then(function(){P.exit();});}
   }
   function onKeyUp(e){if(q('#recovery-banner'))return;if(e.key==='Enter'||e.keyCode===13){e.preventDefault();clearTimeout(enterTimer);if(enterDown&&!enterLong)pressShort();enterDown=false;enterLong=false;}}
   function init(){
@@ -652,9 +694,11 @@
     doc.addEventListener('visibilitychange',function(){if(doc.hidden){
       previewGeneration++;clearTimeout(previewTimer);
       if(launching&&launching.kind==='app'&&launching.accepted){logEvent('Launch handoff',(Date.now()-launching.started)+' ms');var item=lookup(launching.id);if(item){state.recent=M.recordRecent(state.recent,{id:item.id,name:itemName(item)},Date.now());save();}}
-      ++launchGeneration;clearLaunch();P.leaveFullscreen().then(stopVideoPreview);fullscreenInput=false;
+      ++launchGeneration;clearLaunch();returnCleanup=P.leaveFullscreen().then(function(left){return stopVideoPreview().then(function(stopped){
+        var video=P.videoStatus();return left&&stopped&&video.owner==='none'&&!video.pending&&!video.blocked;
+      });});fullscreenInput=false;
       clearTimeout(enterTimer);enterDown=false;enterLong=false;weatherRequest++;if(weatherController)weatherController.abort();weatherInFlight=false;
-    }else{updateClock();refreshWeather();if(Date.now()-refreshThrottle>3500){refreshThrottle=Date.now();refreshData(false);}else refreshVisible();}});
+    }else{returnMode.resume();startReturnWorker();updateClock();refreshWeather();if(Date.now()-refreshThrottle>3500){refreshThrottle=Date.now();refreshData(false);}else refreshVisible();}});
     unwatchInputs=P.watchInputs(function(){
       if(launching||fullscreenInput||P.videoStatus().owner!=='none'||P.videoStatus().pending){refreshDeferred=true;return;}
       clearTimeout(watchTimer);watchTimer=setTimeout(function(){refreshData(false);},120);
@@ -663,8 +707,10 @@
     w.addEventListener('resize',function(){if(w.innerWidth===viewportWidth&&w.innerHeight===viewportHeight)return;viewportWidth=w.innerWidth;viewportHeight=w.innerHeight;previewingId=null;if(page==='home'&&!modalOpen&&!fullscreenInput&&!launching)showPage('home',captureFocus());});
     w.addEventListener('online',function(){updateNetwork();refreshWeather(true);});w.addEventListener('offline',updateNetwork);
     w.addEventListener('blur',function(){clearTimeout(enterTimer);enterDown=false;enterLong=false;});
-    w.addEventListener('pagehide',function(){if(unwatchInputs)unwatchInputs();if(unwatchApps)unwatchApps();P.leaveFullscreen().then(stopVideoPreview);});
+    w.addEventListener('pagehide',function(){++returnSetup;returnMode.disable();if(unwatchInputs)unwatchInputs();if(unwatchApps)unwatchApps();P.leaveFullscreen().then(stopVideoPreview);});
     initialCache();refreshData(false);showPage('home');maybeSetup();
+    if(w.LauncherRecovery&&w.LauncherRecovery.safe)setReturnPreference(false);
+    else if(storageGet('cinematic-tv-return-enabled')==='1')configureReturn(true);
     if(w.LauncherRecovery)w.LauncherRecovery.ready();
   }
   if(doc.readyState==='loading')doc.addEventListener('DOMContentLoaded',init);else init();

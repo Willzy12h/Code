@@ -33,7 +33,9 @@ with sync_playwright() as p:
     audit('setting-setup',setup)
     def startup(page):
         click(page,'setting-startup');text=page.locator('#modal-text').inner_text()
-        assert 'Autorun Last App' in text and 'Turn it off' in text and 'depends' in text
+        assert 'experimental return' in text and 'does not replace Home' in text and 'Off' in text
+        assert page.get_by_role('button',name='Open Samsung Home and pause return',exact=True).count()==1
+        assert page.get_by_role('button',name='Enable background return (experimental)',exact=True).count()==1
         button(page,'Exit Cinematic TV');page.wait_for_timeout(40);assert page.evaluate("window.__calls.includes('exit')")
     audit('setting-startup',startup)
     def profiles(page):

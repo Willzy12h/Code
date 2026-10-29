@@ -1,3 +1,5 @@
+> Optional experimental background return is available in 0.4.6, default Off. See [controls, limitations and physical trial](docs/TV-FEEDBACK-0.4.6.md). No internal Home configuration is changed.
+
 # Cinematic TV 0.4.5
 
 A personal, remote-first Samsung Tizen TV launcher. The agreed Cinematic Spotlight layout is retained: recent apps/inputs on the left, an adaptive preview beside them, favourites below, and open scenic wallpaper. No recommendation feed, adverts, telemetry, accounts or custom screensaver.

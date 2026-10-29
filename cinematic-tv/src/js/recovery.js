@@ -9,6 +9,7 @@
     var text=doc.createElement('p');text.textContent='Cinematic TV encountered a problem. Samsung Home and Settings remain available.';banner.appendChild(text);
     var button=doc.createElement('button');button.textContent='Restart with safe launcher settings';button.onclick=function(){
       try{var state=JSON.parse(w.localStorage.getItem('cinematic-tv-v1')||'{}');state.previewMode='off';state.wallpaper='scenic';state.showWeather=false;state.reducedEffects=true;w.localStorage.setItem('cinematic-tv-v1',JSON.stringify(state));}catch(e){}
+      try{w.localStorage.setItem('cinematic-tv-return-enabled','0');}catch(e){}
       w.location.reload();
     };banner.appendChild(button);doc.body.appendChild(banner);button.focus();
   }
