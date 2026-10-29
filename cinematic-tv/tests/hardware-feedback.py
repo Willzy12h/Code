@@ -74,13 +74,18 @@ with sync_playwright() as p:
     def icon_focus():
         page=browser.new_page(viewport={'width':1920,'height':1080})
         prepare(page,{'previewMode':'off'},True)
-        page.evaluate("(url)=>window.__apps[0].iconPath=url", 'data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20width=%22256%22%20height=%22256%22%3E%3Crect%20width=%22256%22%20height=%22256%22%20fill=%22red%22/%3E%3C/svg%3E')
+        page.evaluate("(url)=>window.__apps[1].iconPath=url", 'data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20width=%22256%22%20height=%22256%22%3E%3Crect%20width=%22256%22%20height=%22256%22%20fill=%22red%22/%3E%3C/svg%3E')
         render(page);page.wait_for_timeout(200)
-        tile=page.locator('#favourites .app-card').first;tile.focus();page.wait_for_timeout(260)
+        tile=page.locator('#favourites .app-card').nth(1);tile.focus();page.wait_for_timeout(260)
         image=tile.locator('img');logo=tile.locator('.logo')
-        assert image.bounding_box()['width']/logo.bounding_box()['width']>.82, 'Native icon fill is too small'
+        assert image.bounding_box()['width']/logo.bounding_box()['width']>.98, 'Native artwork does not reach the rounded tile edge'
         scale=logo.evaluate("e=>new DOMMatrix(getComputedStyle(e).transform).a")
         assert scale>=1.06, 'Focus does not clearly lift the selected tile'
+        assert image.evaluate("e=>getComputedStyle(e).objectFit")=='cover'
+        youtube=page.locator('#favourites .app-card').first
+        assert youtube.locator('svg').count()==1 and youtube.locator('img').count()==0, 'YouTube native artwork replaced the consistent mark'
+        pc=page.locator('#recent-list .recent-item').first
+        assert pc.locator('.input-mark svg').count()==1, 'PC input still uses a text-box glyph'
         assert not page.evaluate('document.documentElement.scrollWidth>innerWidth'), 'Home overflows the viewport'
         page.close()
     case('Native icons fill favourites and selected tiles have a clear bounded lift',icon_focus)

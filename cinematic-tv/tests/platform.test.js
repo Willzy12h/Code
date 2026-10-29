@@ -132,3 +132,15 @@ test('external Samsung source change is never overwritten by preview cleanup', a
   assert.equal(source().number,4);
   assert.equal(calls.includes('set:1'),false);
 });
+
+
+test('previewing the already active input does not reselect HDMI or restore it unnecessarily',async()=>{
+ const {P,calls,source}=makePlatform();
+ await P.preview(hdmi(1),rect,()=>{},()=>{});
+ assert.equal(P.videoStatus().visible,true);
+ assert.equal(calls.filter(x=>x.startsWith('set:')).length,0);
+ await P.stopPreview();
+ assert.equal(calls.filter(x=>x.startsWith('set:')).length,0);
+ assert.equal(source().number,1);
+ assert.ok(calls.includes('hide'));
+});

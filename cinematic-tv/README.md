@@ -1,4 +1,6 @@
-# Cinematic TV 0.4.1
+> 0.4.2 follow-up: the user observed quicker response on 0.4.1, but startup flicker and inset square icons. Current-source preview now avoids reselecting HDMI; artwork fills the rounded tile, YouTube uses its vector mark and PC/HDMI shortcuts use a vector monitor. Physical acceptance of this follow-up is pending.
+
+# Cinematic TV 0.4.2
 
 A personal, remote-first Samsung Tizen TV launcher. The agreed Cinematic Spotlight layout is retained: recent apps/inputs on the left, an adaptive preview beside them, favourites below, and open scenic wallpaper. No recommendation feed, adverts, telemetry, accounts or custom screensaver.
 

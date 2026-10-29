@@ -1,3 +1,5 @@
+> Follow-up 0.4.2: the user confirmed quicker response on 0.4.1 and reported startup flicker plus nested square YouTube/PC/app artwork. The narrow correction avoids reselecting an already active preview source, keeps YouTube vector artwork, uses a vector input monitor, and clips native artwork to the tile edge. One new native-controller regression brings the Node total to 63; the existing seven feedback cases include stronger artwork assertions. The rest of this file records the 0.4.1 changes and acceptance boundaries.
+
 # Cinematic TV 0.4.1 — S95H feedback
 
 This patch continues the authoritative `gpt/cinematic-tv-v0.4.0` branch. Application/package identity remains `CinemTV001.Launcher` / `CinemTV001`; the higher package version distinguishes the update from the first signed 0.4.0 candidate.

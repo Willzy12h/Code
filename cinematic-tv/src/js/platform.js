@@ -88,7 +88,8 @@
           if(visible)await hide();
           if(token!==generation)return false;
           previewSource=source;lastOperation='Changing preview source';
-          await setSource(source);
+          // Avoid retriggering the active HDMI source and its signal handshake.
+          if(!sameSource(tv.getSource('MAIN'),source))await setSource(source);
           if(token!==generation)return false;
           lastOperation='Displaying HDMI thumbnail';await show(rect);
           if(token!==generation)return false;

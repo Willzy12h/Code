@@ -1,7 +1,7 @@
 /* Cinematic TV v0.4 — remote-first Samsung TV launcher. */
 (function(w,doc){
   'use strict';
-  var M=w.LauncherModel,P=w.LauncherPlatform,F=w.LauncherFeatures,VERSION='0.4.1';
+  var M=w.LauncherModel,P=w.LauncherPlatform,F=w.LauncherFeatures,VERSION='0.4.2';
   var STORAGE='cinematic-tv-v1', APP_CACHE='cinematic-tv-apps-v2', WEATHER_CACHE='cinematic-tv-weather-v1';
   function storageGet(key){try{return localStorage.getItem(key);}catch(e){return null;}}
   var state=M.load(storageGet(STORAGE)),page='home',filter='All',searchTerm='',selected=null,modalOpen=false,modalReturn=null;
@@ -134,13 +134,20 @@
   function brandClass(name){name=M.nameOf(name).toLowerCase();var match=[['youtube','youtube'],['crunchyroll','crunchyroll'],['apple','apple-tv'],['netflix','netflix'],['paramount','paramount'],['disney','disney'],['prime','prime'],['hue','hue'],['spotify','spotify'],['plex','plex'],['iplayer','iplayer'],['twitch','twitch'],['itvx','itvx']];for(var i=0;i<match.length;i++)if(name===match[i][0]||name===({apple:'apple tv',paramount:'paramount+',disney:'disney+',prime:'prime video',hue:'hue sync',iplayer:'bbc iplayer'})[match[i][0]])return match[i][1];return'neutral';}
   function brandText(name){var words={'YouTube':'▶','Crunchyroll':'crunchyroll','Apple TV':'Apple TV','Netflix':'N','Paramount+':'Paramount+','Disney+':'Disney+','Prime Video':'prime video','Hue Sync':'hue','Plex':'PLEX','Spotify':'Spotify','BBC iPlayer':'BBC','ITVX':'itvx','5':'5','Channel 4':'4','Twitch':'Twitch','Samsung Health':'Health','SmartThings':'SmartThings'};return words[name]||String(name||'App').slice(0,17);}
   function logo(item){var name=itemName(item),l=el('div','logo '+brandClass(name));var word=el('span','logotext',item.kind==='input'?F.inputGlyph(state.inputIcons[item.port]):brandText(name));l.appendChild(word);
+    if(item.kind==='input'){
+      word.textContent='';word.classList.add('input-mark');
+      var monitor=doc.createElementNS('http://www.w3.org/2000/svg','svg');monitor.setAttribute('viewBox','0 0 100 76');monitor.setAttribute('aria-hidden','true');
+      var inputKind=state.inputIcons[item.port]||(/\b(pc|computer|desktop)\b/i.test(name)?'pc':'generic');
+      var inputPaths={pc:'M14 8 H86 Q92 8 92 14 V52 Q92 58 86 58 H14 Q8 58 8 52 V14 Q8 8 14 8 Z M35 69 H65 M50 58 V69',console:'M28 23 H72 Q83 23 87 36 L93 56 Q96 68 84 66 L68 54 H32 L16 66 Q4 68 7 56 L13 36 Q17 23 28 23 Z M24 34 V48 M17 41 H31 M70 36 H71 M78 45 H79',streamer:'M18 15 H82 Q88 15 88 21 V55 Q88 61 82 61 H18 Q12 61 12 55 V21 Q12 15 18 15 Z M34 27 L65 38 L34 49 Z',receiver:'M14 18 H86 V59 H14 Z M24 29 H55 V38 H24 Z M70 30 A8 8 0 1 0 70 46 A8 8 0 1 0 70 30 M25 48 H47',generic:'M18 20 H82 V42 L69 57 H31 L18 42 Z M31 31 V40 M43 31 V40 M55 31 V40 M67 31 V40 M50 57 V69'};
+      var outline=doc.createElementNS(monitor.namespaceURI,'path');outline.setAttribute('d',inputPaths[inputKind]||inputPaths.generic);outline.setAttribute('fill','none');outline.setAttribute('stroke','currentColor');outline.setAttribute('stroke-width','4');outline.setAttribute('stroke-linecap','round');outline.setAttribute('stroke-linejoin','round');monitor.appendChild(outline);word.appendChild(monitor);
+    }
     if(name==='YouTube'){
       word.textContent='';word.classList.add('brand-icon');
       var svg=doc.createElementNS('http://www.w3.org/2000/svg','svg');svg.setAttribute('viewBox','0 0 90 64');svg.setAttribute('aria-hidden','true');
       var rect=doc.createElementNS(svg.namespaceURI,'rect');rect.setAttribute('x','3');rect.setAttribute('y','7');rect.setAttribute('width','84');rect.setAttribute('height','50');rect.setAttribute('rx','13');rect.setAttribute('fill','#ff0033');
       var play=doc.createElementNS(svg.namespaceURI,'path');play.setAttribute('d','M36 20 L59 32 L36 44 Z');play.setAttribute('fill','#fff');svg.appendChild(rect);svg.appendChild(play);word.appendChild(svg);
     }
-    if(item.kind==='app'&&item.icon&&P.isTV){var img=el('img','native-icon');img.alt='';img.onload=function(){word.style.display='none';};img.onerror=function(){img.remove();word.style.display='';};
+    if(item.kind==='app'&&name!=='YouTube'&&item.icon&&P.isTV){var img=el('img','native-icon');img.alt='';img.onload=function(){word.style.display='none';};img.onerror=function(){img.remove();word.style.display='';};
       if(iconLoads[item.icon])img.src=iconLoads[item.icon];else P.resolveIcon(item.icon,function(url){iconLoads[item.icon]=url;img.src=url;});l.appendChild(img);}
     return l;}
   function button(action,cls,item){var b=el('button','navitem '+(cls||''));b.type='button';if(action)b.dataset.action=action;if(item)b.dataset.itemid=item.id;return b;}
