@@ -44,7 +44,7 @@ Replace the placeholder with the TV's actual IPv4 address:
 
 This connects only to that target, checks it appears as an authorised SDB device, installs the verified WGT and asks the SDK to run `CinemTV001.Launcher`. An SDK command success is not confirmation of the TV picture or remote behaviour. The helper does not enable preview or redirect Samsung Home.
 
-The helper is included for local execution; Windows PowerShell, Samsung SDK packaging, certificate issuance and TV installation were **not** executable in the chat runtime. It contains no credentials or guessed TV IP.
+The earlier cloud runtime could not execute the helper. Local Windows PowerShell parsing, Doctor, Samsung signing, package inspection, TV installation and SDK launch have now passed; physical acceptance remains incomplete. See [Windows validation](LOCAL-VALIDATION.md). The helper contains no credentials or guessed TV IP.
 
 ## 3. Direct SDK commands (fallback)
 

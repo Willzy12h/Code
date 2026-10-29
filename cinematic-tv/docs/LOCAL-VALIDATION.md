@@ -14,7 +14,7 @@ Environment: Windows, Node.js 26.12.1, npm 11.20.0, isolated Python 3.12.14, pin
 
 | Check | Result |
 |---|---|
-| `npm run verify` | PASS: syntax, 52 Node tests, unsigned build, manifest/resource gate, browser acceptance, asynchronous HDMI mock acceptance and 17 readiness scenarios |
+| `npm run verify` | PASS: syntax, 52 Node tests, unsigned build, manifest/resource gate, browser acceptance, asynchronous HDMI mock acceptance and 18 readiness scenarios (including pointer-free welcome-dialog navigation) |
 | `npm run test:served` | PASS: unchanged source over local HTTP, unchanged CSP, no browser JavaScript errors |
 | `npm run build` | PASS: 12 runtime files, 812,437 bytes; unsigned staging only |
 | Additional independent HTTP/CSP probe | PASS with Chromium sandbox enabled: served HTML and all 12 file hashes matched source/build manifest; inline script, external script and unapproved fetch blocked; initial preview mode off |
@@ -30,13 +30,13 @@ The first real-origin attempt failed while local AdGuard filtering injected reso
 Run `40795747956` has two distinct failures:
 
 - Attempt 1, job `123191693514`: zero steps, no runner assigned. The check annotation explicitly says recent account payments failed or the spending limit needs increasing. This is an account/billing gate, not an application-test failure.
-- Attempt 2, job `123195185949`: checkout and runtime setup succeeded. Browser-tooling installation failed because Playwright 1.57.0 does not support Chromium on Ubuntu 26.04. Application and CSP test steps were skipped. Pinning Ubuntu 24.04 addresses this evidenced tooling mismatch; a subsequent CI run is a separate verification gate.
+- Attempt 2, job `123195185949`: checkout and runtime setup succeeded. Browser-tooling installation failed because Playwright 1.57.0 does not support Chromium on Ubuntu 26.04. Application and CSP test steps were skipped. Pinning Ubuntu 24.04 addresses this evidenced tooling mismatch; the follow-up run `40798827067` passed every gate for commit `b1809a2f1371f07c7b7dde3a02c942b9829b3e6c`.
 
 ## Signing and hardware boundary
 
-At this checkpoint the user is completing the Samsung TV distributor certificate for the connected S95H. No signed WGT, package fingerprint or installation success is claimed. Keep the author certificate for updates and signing material outside Git. The helper checks payload hashes, identity and public certificate metadata; it does not independently verify XML signatures or the Samsung trust chain.
+The local Samsung TV profile `CinematicTV` successfully signed `signed/Cinematic-TV-0.4.0.wgt`. Independent inspection found exactly 12 reviewed runtime files plus two signature XML files, with all payload SHA-256 hashes matching. A separate bounded cryptographic check verified both RSA/SHA-512 signature values and all 25 package-file reference digests across the two signatures; it did not check the C14N 1.1 signature-properties reference or independently validate the Samsung trust chain. Public hashes and certificate fingerprints are retained in the local output report, not signing credentials. Keep the author certificate for updates and signing material outside Git.
 
-Initial installation must leave HDMI preview off. Picture, sound, actual remote behaviour, native app launches, HDMI gaming/HDR/VRR, idle protection and preview acceptance still require observations on the physical TV using `HDMI-ACCEPTANCE.md`. SDK command success is not those observations.
+The identified QE48S95HHEXXU accepted the signed package and SDK launch succeeded (initial PID 570). The user observed the welcome prompt and reported that remote input became usable only after approximately 20 seconds. This startup delay remains unresolved; subsequent navigation working is not full acceptance. A suspected modal-focus escape was not reproduced: the current code already excludes background navigation, and the keyboard-only browser test passes without a handler change. SDB dlog returned no lines, the TV reports logging disabled, and an app-scoped debug attempt returned no diagnostics; no logging/security restrictions were changed. Initial installation left HDMI preview off. Picture, sound, actual remote behaviour, native app launches, HDMI gaming/HDR/VRR, idle protection and preview acceptance still require observations on the physical TV using `HDMI-ACCEPTANCE.md`. SDK command success is not those observations.
 
 ## Recovery
 

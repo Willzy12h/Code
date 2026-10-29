@@ -19,6 +19,18 @@ with server() as url, sync_playwright() as p:
         assert monitor['y']+monitor['height']<=caption['y'], 'Static PC artwork overlaps its caption'
         page.close()
     case('Static PC artwork leaves its caption unobscured',static_caption)
+    def setup_remote():
+        page=fresh({'setupDone':False},True)
+        for key in ['ArrowUp','ArrowRight','ArrowDown','ArrowLeft','ArrowUp']:
+            page.keyboard.press(key)
+            assert page.locator('#modal-actions .is-focused').count()==1, 'Remote focus escaped the welcome dialog'
+            assert page.evaluate('document.querySelector("#modal-actions").contains(document.activeElement)')
+        page.keyboard.press('Enter')
+        assert page.locator('#confirm.hidden').count()==1
+        assert page.evaluate('JSON.parse(localStorage.getItem("cinematic-tv-v1")).setupDone') is True
+        assert page.evaluate('JSON.parse(localStorage.getItem("cinematic-tv-v1")).previewMode')=='off'
+        page.close()
+    case('Welcome dialog traps remote focus and accepts OK without a pointer',setup_remote)
     def held_setting():
         page=fresh();page.keyboard.press('ArrowUp');page.keyboard.down('Enter');page.wait_for_timeout(230);page.keyboard.up('Enter')
         assert page.locator('#page-title').inner_text()=='Launcher Settings';page.close()
