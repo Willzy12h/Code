@@ -1,15 +1,17 @@
 /* Cinematic TV v0.4 — remote-first Samsung TV launcher. */
 (function(w,doc){
   'use strict';
-  var M=w.LauncherModel,P=w.LauncherPlatform,F=w.LauncherFeatures,VERSION='0.4.0';
+  var M=w.LauncherModel,P=w.LauncherPlatform,F=w.LauncherFeatures,VERSION='0.4.1';
   var STORAGE='cinematic-tv-v1', APP_CACHE='cinematic-tv-apps-v2', WEATHER_CACHE='cinematic-tv-weather-v1';
   function storageGet(key){try{return localStorage.getItem(key);}catch(e){return null;}}
   var state=M.load(storageGet(STORAGE)),page='home',filter='All',searchTerm='',selected=null,modalOpen=false,modalReturn=null;
   var catalog=[],inputList=[],appById={},inputById={},hiddenBack=false,editingFromApps=false,fullscreenInput=false;
   var toastTimer,previewTimer,previewGeneration=0,refreshGeneration=0,refreshThrottle=0,enterDown=false,enterLong=false,enterTimer=null;
   var inputMode=false,movingId=null,movingOriginal=null,diagnostics={status:'Not checked',error:'',lastCheck:0};
-  var eventLog=[],launching=null,launchTimer=null,launchGeneration=0,refreshDeferred=false,hasCatalogue=false,wallpaperGeneration=0,firstDataRender=true;
+  var eventLog=[],launching=null,launchTimer=null,launchGeneration=0,refreshDeferred=false,hasCatalogue=false,wallpaperGeneration=0,firstDataRender=true,previewingId=null;
   var weatherController=null,weatherCode=null,locationRequest=0,unwatchApps=null,unwatchInputs=null,watchTimer=null,viewFocus={};
+  var dailyClient=null,dailyRecord=null,dailyObjectUrl='',wallpaperStatus='Bundled wallpaper',weatherStatus='Not checked',weatherError='';
+  try{var imageDb=null;try{imageDb=w.indexedDB;}catch(e){}dailyClient=w.LauncherWallpapers.create(w.fetch.bind(w),w.LauncherWallpapers.browserCache(imageDb));}catch(e){}
   var weatherTime=0,weatherInFlight=false,weatherRequest=0,iconLoads={};
   var q=function(s){return doc.querySelector(s);};
   var qa=function(s){return Array.prototype.slice.call(doc.querySelectorAll(s));};
@@ -68,13 +70,13 @@
   }
   function choosePC(){
     modal('Choose PC input','Choose the actual port. No source is switched.',inputList.filter(function(i){return i.port.indexOf('HDMI')===0;}).map(function(i){return{label:itemName(i)+' · '+i.port,fn:function(){
-      state.inputNames[i.port]='PC';state.inputIcons[i.port]='pc';if(state.favouriteIds===null)state.favouriteIds=[];if((state.favouriteIds||[]).indexOf(i.id)<0)state.favouriteIds.push(i.id);save();showPage('home');
+      state.pcPort=i.port;state.inputNames[i.port]='PC';state.inputIcons[i.port]='pc';if(state.favouriteIds===null)state.favouriteIds=[];if((state.favouriteIds||[]).indexOf(i.id)<0)state.favouriteIds.push(i.id);save();showPage('home');
     }};}).concat([{label:'Cancel',fn:function(){}}]));
   }
   function maybeSetup(force){
     if(!force&&state.setupDone)return;
-    modal('Welcome to Cinematic TV','Your apps, recent sources and scenic Home. Samsung Settings stay on the remote. Live HDMI preview stays off until you enable it.',[
-      {label:'Use recommended setup',fn:function(){state.setupDone=true;state.previewMode='off';save();showPage('home');}},
+    modal('Welcome to Cinematic TV','Your apps, recent sources and scenic Home. Samsung Settings stay on the remote. The current PC source can stay visible while you browse. Preview can be disabled in Launcher Settings.',[
+      {label:'Use recommended setup',fn:function(){state.setupDone=true;save();showPage('home');}},
       {label:'Choose favourite apps',fn:function(){state.setupDone=true;save();editingFromApps=true;showPage('apps');}},
       {label:'Later',fn:function(){state.setupDone=true;save();showPage('home');}}
     ]);
@@ -107,7 +109,7 @@
     var status=P.videoStatus();
     downloadJSON('cinematic-tv-diagnostics.json',JSON.stringify({version:VERSION,mode:P.isTV?'Tizen TV':'Browser demo',
       appCount:catalog.length,inputCount:inputList.length,network:w.navigator.onLine===false?'Offline':'Network available',
-      catalogue:diagnostics.status,video:{owner:status.owner,visible:status.visible,blocked:status.blocked,pending:status.pending,error:F.redact(status.lastError)},
+      catalogue:diagnostics.status,weather:{status:weatherStatus,error:weatherError},wallpaper:{mode:state.wallpaper,status:wallpaperStatus},viewport:{width:w.innerWidth,height:w.innerHeight},video:{owner:status.owner,visible:status.visible,blocked:status.blocked,pending:status.pending,error:F.redact(status.lastError)},
       events:F.sanitiseDiagnostic(eventLog),hardwareVerified:false},null,2));
   }
   function checkUpdates(){
@@ -129,9 +131,15 @@
   function lookup(id){return appById[id]||inputById[id]||null;}
   function itemName(item){return item?(item.kind==='input'?(state.inputNames[item.port]||item.name||item.port):item.name):'';}
   function matchApp(name){return catalog.find(function(a){return a.name===name;});}
-  function brandClass(name){name=(name||'').toLowerCase();var match=[['youtube','youtube'],['crunchyroll','crunchyroll'],['apple','apple-tv'],['netflix','netflix'],['paramount','paramount'],['disney','disney'],['prime','prime'],['hue','hue'],['spotify','spotify'],['plex','plex'],['iplayer','iplayer'],['twitch','twitch'],['itvx','itvx']];for(var i=0;i<match.length;i++)if(name.indexOf(match[i][0])>=0)return match[i][1];return'neutral';}
-  function brandText(name){var words={'YouTube':'▶','Crunchyroll':'◕','Apple TV':'●tv','Netflix':'N','Paramount+':'◈','Disney+':'Disney+','Prime Video':'prime video','Hue Sync':'hue','Plex':'PLEX','Spotify':'● Spotify','BBC iPlayer':'BBC','ITVX':'itvx','5':'5','Channel 4':'4','Twitch':'Twitch','Samsung Health':'♥','SmartThings':'✧'};return words[name]||String(name||'App').slice(0,17);}
+  function brandClass(name){name=M.nameOf(name).toLowerCase();var match=[['youtube','youtube'],['crunchyroll','crunchyroll'],['apple','apple-tv'],['netflix','netflix'],['paramount','paramount'],['disney','disney'],['prime','prime'],['hue','hue'],['spotify','spotify'],['plex','plex'],['iplayer','iplayer'],['twitch','twitch'],['itvx','itvx']];for(var i=0;i<match.length;i++)if(name===match[i][0]||name===({apple:'apple tv',paramount:'paramount+',disney:'disney+',prime:'prime video',hue:'hue sync',iplayer:'bbc iplayer'})[match[i][0]])return match[i][1];return'neutral';}
+  function brandText(name){var words={'YouTube':'▶','Crunchyroll':'crunchyroll','Apple TV':'Apple TV','Netflix':'N','Paramount+':'Paramount+','Disney+':'Disney+','Prime Video':'prime video','Hue Sync':'hue','Plex':'PLEX','Spotify':'Spotify','BBC iPlayer':'BBC','ITVX':'itvx','5':'5','Channel 4':'4','Twitch':'Twitch','Samsung Health':'Health','SmartThings':'SmartThings'};return words[name]||String(name||'App').slice(0,17);}
   function logo(item){var name=itemName(item),l=el('div','logo '+brandClass(name));var word=el('span','logotext',item.kind==='input'?F.inputGlyph(state.inputIcons[item.port]):brandText(name));l.appendChild(word);
+    if(name==='YouTube'){
+      word.textContent='';word.classList.add('brand-icon');
+      var svg=doc.createElementNS('http://www.w3.org/2000/svg','svg');svg.setAttribute('viewBox','0 0 90 64');svg.setAttribute('aria-hidden','true');
+      var rect=doc.createElementNS(svg.namespaceURI,'rect');rect.setAttribute('x','3');rect.setAttribute('y','7');rect.setAttribute('width','84');rect.setAttribute('height','50');rect.setAttribute('rx','13');rect.setAttribute('fill','#ff0033');
+      var play=doc.createElementNS(svg.namespaceURI,'path');play.setAttribute('d','M36 20 L59 32 L36 44 Z');play.setAttribute('fill','#fff');svg.appendChild(rect);svg.appendChild(play);word.appendChild(svg);
+    }
     if(item.kind==='app'&&item.icon&&P.isTV){var img=el('img','native-icon');img.alt='';img.onload=function(){word.style.display='none';};img.onerror=function(){img.remove();word.style.display='';};
       if(iconLoads[item.icon])img.src=iconLoads[item.icon];else P.resolveIcon(item.icon,function(url){iconLoads[item.icon]=url;img.src=url;});l.appendChild(img);}
     return l;}
@@ -166,21 +174,23 @@
   function fillSettings(){var area=q('#settings-list');area.textContent='';
     var rows=[
       ['First-run setup','Review the initial choices without resetting anything','Open','setting-setup'],
-      ['Home profiles','Save and switch favourites/layout presets',state.profiles.length+' saved','setting-profiles'],
+      ['Startup and exit','Samsung startup options and leaving the launcher','View options','setting-startup'],
+      ['Home profiles','Save and switch favourites and appearance',state.profiles.length+' saved','setting-profiles'],
       ['Choose PC input','Name and pin the actual PC port without switching it','Choose','setting-pc'],
-      ['Layout','Cinematic, Balanced or Compact',{cinematic:'Cinematic',balanced:'Balanced',compact:'Compact'}[state.layout],'setting-layout'],
       ['Default Home selection','Last used, PC or first favourite',{recent:'Last used',pc:'PC',favourite:'Favourite'}[state.focusDefault],'setting-focus'],
-      ['Live HDMI preview','Hardware TVWindow; opt-in until tested on S95H',state.previewMode==='off'?'Off':'When selected','setting-preview'],
+      ['PC preview','Keep the current PC HDMI picture while browsing',state.previewMode==='off'?'Off':'On','setting-preview'],
       ['Preview source policy','Default: only preview the currently selected TV source',state.autoPreviewCurrentOnly?'Current source only':'Allow temporary switch','setting-preview-policy'],
       ['Recover HDMI','Attempt cleanup after a native API error','Retry','setting-video-reset'],
       ['Recent items','How many apps and inputs to show',state.recentCount,'setting-recent'],
       ['Quick Switch','Show a shortcut to the previous app/input',state.quickSwitch?'On':'Off','setting-quick'],
       ['Network indicator','Link state only; not an internet availability test',state.showNetwork?'On':'Off','setting-network'],
       ['Weather','Current conditions from Open-Meteo',state.showWeather?'On':'Off','setting-weather'],
+      ['Refresh weather','Retry the weather service now',weatherStatus,'setting-weather-refresh'],
       ['Clock','Show the time on the Home header',state.showClock?'On':'Off','setting-clock'],
       ['Weather location','Choose town or postcode (no GPS)',state.city,'setting-city'],
       ['Temperature','Celsius or Fahrenheit',state.tempUnit==='celsius'?'°C':'°F','setting-unit'],
-      ['Wallpaper','Offline wallpapers or optional custom URL',state.wallpaper==='scenic'?'Scenic':state.wallpaper==='twilight'?'Twilight':state.wallpaper==='dawn'?'Dawn':state.wallpaper==='custom'?'Custom':state.wallpaper==='auto'?'Automatic':'Dark','setting-wallpaper'],
+      ['Wallpaper','Bundled, daily online photograph or your own image',state.wallpaper==='scenic'?'Scenic':state.wallpaper==='twilight'?'Twilight':state.wallpaper==='dawn'?'Dawn':state.wallpaper==='custom'?'Custom':state.wallpaper==='auto'?'Automatic':state.wallpaper==='daily'?'Daily photograph':'Dark','setting-wallpaper'],
+      ['Wallpaper credits','Daily photograph source, photographer and licence','View','setting-wallpaper-credits'],
       ['Weather-adaptive wallpaper','Affects Automatic wallpaper only; uses existing weather data',state.adaptiveWeather?'On':'Off','setting-adaptive'],
       ['Reduced glass effects','Less blur for a lighter interface',state.reducedEffects?'On':'Off','setting-effects'],
       ['Custom wallpaper URL','HTTPS image; optional, online',state.customWallpaperUrl?'Configured':'Not set','setting-custom'],
@@ -189,7 +199,7 @@
       ['Long-press OK','Edit shortcut rather than launch',state.longPressMs+' ms','setting-hold'],
       ['Disconnected inputs','Hide from recent activity only',state.hideDisconnected?'Hidden':'Shown','setting-disconnected'],
       ['Rename HDMI','Rename any input, even disconnected','Edit','setting-rename'],
-      ['Hidden apps','Show hidden apps in All Apps',state.showHidden?'Shown':'Hidden','setting-hidden'],
+      ['Hidden apps','Show apps you hid; system services stay excluded',state.showHidden?'Shown':'Hidden','setting-hidden'],
       ['Manage favourites','Add, remove and reposition apps and inputs','Edit','edit'],
       ['Search installed apps','Find an app by name','Search','setting-search'],
       ['Refresh catalogue','Recheck applications and input state','Refresh','setting-refresh'],
@@ -204,7 +214,7 @@
   }
   function applyAppearance(){
     doc.body.classList.toggle('reduced-motion',!!state.reducedMotion);doc.body.classList.toggle('white-glow',state.glow==='white');
-    doc.body.classList.toggle('reduced-effects',state.reducedEffects);doc.body.dataset.layout=state.layout;
+    doc.body.classList.toggle('reduced-effects',state.reducedEffects);doc.body.dataset.layout='cinematic';
     q('#clock').style.display=state.showClock?'block':'none';q('#weather').style.display=state.showWeather?'flex':'none';
     var quick=q('[data-action="quick-switch"]');if(quick)quick.hidden=!state.quickSwitch;
     updateNetwork();
@@ -213,6 +223,23 @@
     if(selectedWallpaper==='dark'){wall.style.display='none';return;}
     wall.style.display='';var uri=selectedWallpaper==='custom'?M.safeUrl(state.customWallpaperUrl):images[selectedWallpaper]||images.scenic;
     var token=++wallpaperGeneration;
+    if(selectedWallpaper==='daily'){
+      wall.style.backgroundImage='url("'+(dailyObjectUrl||images.scenic)+'")';
+      if(!dailyClient){wallpaperStatus='Daily image unavailable; bundled scenery';return;}
+      dailyClient.load().then(function(record){
+        if(token!==wallpaperGeneration||state.wallpaper!=='daily')return;
+        if(record===dailyRecord&&dailyObjectUrl)return;
+        var objectUrl=URL.createObjectURL(record.blob),image=new Image();
+        image.onload=function(){
+          if(token!==wallpaperGeneration||state.wallpaper!=='daily'){URL.revokeObjectURL(objectUrl);return;}
+          if(image.naturalWidth>8192||image.naturalHeight>8192){URL.revokeObjectURL(objectUrl);wallpaperStatus='Daily image dimensions unsupported';return;}
+          if(dailyObjectUrl)URL.revokeObjectURL(dailyObjectUrl);dailyObjectUrl=objectUrl;dailyRecord=record;
+          wall.style.backgroundImage='url("'+objectUrl+'")';wallpaperStatus=record.cached?'Daily photograph · cached':'Daily photograph';
+          if(page==='settings')settingsHomePreview();
+        };
+        image.onerror=function(){URL.revokeObjectURL(objectUrl);wallpaperStatus='Daily image could not be decoded; bundled scenery';};image.src=objectUrl;
+      }).catch(function(e){if(token===wallpaperGeneration){wallpaperStatus=F.redact(e.message);logEvent('Wallpaper',e.message);}});return;
+    }
     if(selectedWallpaper!=='custom'){wall.style.backgroundImage='url("'+uri+'")';return;}
     wall.style.backgroundImage='url("'+images.scenic+'")';
     var img=new Image(),timer=setTimeout(function(){img.onload=null;img.onerror=null;if(token===wallpaperGeneration)toast('Wallpaper unavailable; using bundled scenery');},6500);
@@ -225,69 +252,116 @@
   function formatWeather(data,stale){if(!data||!data.current||!Number.isFinite(data.current.temperature_2m))return false;
     var value=Math.round(data.current.temperature_2m);q('.weather-symbol').textContent=weatherGlyph(data.current.weather_code||0);
     q('#weather-info').textContent=value+(state.tempUnit==='fahrenheit'?'°F':'°C')+'  '+state.city+(stale?' · cached':'');return true;}
+  function updateWeatherStatus(){var value=q('#settings-list [data-action="setting-weather-refresh"] .setting-value');if(value)value.textContent=state.showWeather?weatherStatus:'Off';}
   function refreshWeather(force){
-    if(!state.showWeather||doc.hidden)return;
+    if(!state.showWeather){weatherStatus='Off';weatherError='';updateWeatherStatus();return;}if(doc.hidden)return;
     if(force&&weatherController){weatherController.abort();weatherRequest++;weatherInFlight=false;}
     if(weatherInFlight)return;
     var now=Date.now(),location=state.latitude+','+state.longitude+','+state.tempUnit,cached=null;
     try{cached=JSON.parse(storageGet(WEATHER_CACHE)||'null');}catch(e){}
     var cacheUsable=cached&&cached.location===location&&Number.isFinite(cached.at)&&now>=cached.at&&now-cached.at<6*60*60*1000;
-    if(cacheUsable&&formatWeather(cached.data,true)){
+    if(cacheUsable&&formatWeather(cached.data,true)){weatherStatus='Cached';weatherError='';updateWeatherStatus();
       if(!force&&now-cached.at<30*60*1000){formatWeather(cached.data,false);weatherCode=cached.data.current.weather_code;return;}
-    }else q('#weather-info').textContent='Weather unavailable';
+    }else q('#weather-info').textContent='Loading weather…';
     if(!force&&now-weatherTime<12*60*1000)return;
-    weatherTime=now;weatherInFlight=true;var gen=++weatherRequest;
+    weatherTime=now;weatherInFlight=true;weatherStatus='Loading';weatherError='';updateWeatherStatus();var gen=++weatherRequest;
     weatherController=typeof AbortController==='function'?new AbortController():null;
     var url='https://api.open-meteo.com/v1/forecast?latitude='+encodeURIComponent(state.latitude)+'&longitude='+encodeURIComponent(state.longitude)+'&current=temperature_2m,weather_code&temperature_unit='+state.tempUnit+'&timezone=auto';
     requestJSON(url,6500,weatherController).then(function(data){
-      if(gen!==weatherRequest||!state.showWeather||!formatWeather(data,false))return;
+      if(gen!==weatherRequest||!state.showWeather)return;
+      if(!formatWeather(data,false))throw new Error('Weather response contains no valid current temperature');
+      weatherStatus='Loaded';weatherError='';
       weatherCode=data.current.weather_code;try{localStorage.setItem(WEATHER_CACHE,JSON.stringify({location:location,at:Date.now(),data:data}));}catch(e){}
       if(state.wallpaper==='auto')applyAppearance();
-    }).catch(function(){if(gen===weatherRequest){if(cacheUsable)formatWeather(cached.data,true);else q('#weather-info').textContent='Weather unavailable';logEvent('Weather','Unavailable or timed out');}})
-      .then(function(){if(gen===weatherRequest){weatherInFlight=false;weatherController=null;}});
+    }).catch(function(e){if(gen===weatherRequest){weatherStatus=cacheUsable?'Cached':'Unavailable';weatherError=F.redact(e.message);if(cacheUsable)formatWeather(cached.data,true);else q('#weather-info').textContent='Weather unavailable';logEvent('Weather',e.message);}})
+      .then(function(){if(gen===weatherRequest){weatherInFlight=false;weatherController=null;updateWeatherStatus();}});
+  }
+  function previewTarget(item){
+    if(state.previewMode!=='selected')return item;
+    if(state.pcPort)return inputList.find(function(x){return x.port===state.pcPort;})||fallbackInput('input:HDMI:'+state.pcPort.split(' ')[1]);
+    var pc=inputList.find(function(x){return x.connected&&x.port.indexOf('HDMI')===0&&/\b(pc|computer|desktop)\b/i.test(itemName(x));});
+    if(pc)return pc;
+    var current=P.currentSource();
+    return inputList.find(function(x){return x.connected&&x.raw&&current&&current.type==='HDMI'&&x.raw.type===current.type&&Number(x.raw.number)===Number(current.number);})||item;
   }
   function preview(item){if(!item||page!=='home'||fullscreenInput||modalOpen||launching)return;
+    item=previewTarget(item);
+    if(state.previewMode==='selected'&&item.id===previewingId){
+      var active=P.videoStatus(),source=P.currentSource();
+      if(active.owner==='preview'&&active.visible&&!active.blocked&&!active.pending&&source&&item.raw&&source.type===item.raw.type&&Number(source.number)===Number(item.raw.number))return;
+    }
+    previewingId=item.id;
     var gen=++previewGeneration;clearTimeout(previewTimer);stopVideoPreview();var area=q('#preview'),art=q('#preview-art');area.classList.remove('is-live');art.textContent='';art.className='preview-art';
     q('#preview-title').textContent=itemName(item);q('#preview-meta').textContent=item.kind==='input'?item.port+' · '+(item.connected?'Connected':'Not connected'):'Last used '+timeLabel(item.id)+' · OK to open';q('#preview-indicator').hidden=true;
     if(item.kind==='input'){
       art.classList.add('preview-pc');art.appendChild(el('div','monitor-mock'));
-      var caption=el('span','art-caption',state.previewMode==='selected'?'Live preview requested':'Static preview · enable live HDMI in Settings');art.appendChild(caption);
+      var caption=el('span','art-caption','');art.appendChild(caption);
       if(!item.connected){caption.textContent='HDMI is disconnected';return;}
       if(state.previewMode==='off'||!P.isTV)return;
       var current=P.currentSource();
-      if(state.autoPreviewCurrentOnly&&(!current||current.type!==item.raw.type||Number(current.number)!==Number(item.raw.number))){caption.textContent='Press OK to switch input · preview will not switch it';return;}
+      if(state.autoPreviewCurrentOnly&&(!current||current.type!==item.raw.type||Number(current.number)!==Number(item.raw.number))){caption.textContent='';return;}
 
       previewTimer=setTimeout(function(){if(gen!==previewGeneration||page!=='home'||doc.hidden)return;
         var r=q('#preview-media').getBoundingClientRect(),rect=[Math.round(r.left)+'px',Math.round(r.top)+'px',Math.round(r.width)+'px',Math.round(r.height)+'px'];
-        videoMarker(true);P.preview(item.raw,rect,function(){if(gen!==previewGeneration||page!=='home'){stopVideoPreview();return;}area.classList.add('is-live');q('#preview-indicator').hidden=false;q('#preview-indicator').textContent='● Live HDMI';q('#preview-meta').textContent=item.port+' · Live preview';},
-          function(message){if(gen===previewGeneration){caption.textContent='Live HDMI unavailable · preview disabled';state.previewMode='off';save();logEvent('Preview failed',message);}});
+        videoMarker(true);P.preview(item.raw,rect,function(){if(gen!==previewGeneration||page!=='home'){stopVideoPreview();return;}area.classList.add('is-live');q('#preview-indicator').hidden=true;q('#preview-indicator').textContent='';q('#preview-meta').textContent=item.port;},
+          function(message){if(gen===previewGeneration){caption.textContent='Preview unavailable';state.previewMode='off';save();logEvent('Preview failed',message);}});
       },115);
-    }else{art.classList.add('art-'+brandClass(item.name));art.appendChild(el('div','orbit'));var big=logo(item);big.classList.add('hero-logo');art.appendChild(big);art.appendChild(el('span','art-caption','Press OK to open · no playback'));}
+    }else{art.classList.add('art-'+brandClass(item.name));art.appendChild(el('div','orbit'));var big=logo(item);big.classList.add('hero-logo');art.appendChild(big);art.appendChild(el('span','art-caption',''));}
   }
-  function fillHome(){fillRecent();fillFavourites();var r=recentItems(),fav=favouriteItems(),id=M.defaultSelection(state.focusDefault,r,inputList,fav,state.inputNames);if(id)preview(lookup(id)||fallbackInput(id));}
+  function fillHome(){fillRecent();fillFavourites();var r=recentItems(),fav=favouriteItems(),id=M.defaultSelection(state.focusDefault,r,inputList,fav,state.inputNames,state.pcPort);if(id)preview(lookup(id)||fallbackInput(id));}
   function allVisibleNav(){var items=qa((modalOpen?'#modal-actions .navitem':'#'+page+' .navitem'));
     if(!modalOpen)items=items.concat(qa('.masthead .navitem'));
     return items.filter(function(n){return n.offsetWidth>0&&!n.disabled;});}
   function focusByItem(id){if(!id)return null;return qa('#'+page+' .navitem').find(function(n){return n.dataset.itemid===id;})||null;}
   function focusByAction(action){if(!action)return null;return qa('#'+page+' .navitem').find(function(n){return n.dataset.action===action;})||qa('.masthead .navitem').find(function(n){return n.dataset.action===action;})||null;}
   function focusFirst(){var node;if(page==='home'){
-      var recent=recentItems(),fav=favouriteItems(),id=M.defaultSelection(state.focusDefault,recent,inputList,fav,state.inputNames);
+      var recent=recentItems(),fav=favouriteItems(),id=M.defaultSelection(state.focusDefault,recent,inputList,fav,state.inputNames,state.pcPort);
       node=focusByItem(id)||q('#recent-list .navitem')||q('#favourites .navitem')||q('#home .navitem');
     }else node=q('#'+page+' .navitem');if(node)setFocus(node);}
   function setFocus(node){if(!node||node.disabled||launching)return; if(selected===node)return; if(selected)selected.classList.remove('is-focused');selected=node;node.classList.add('is-focused');
     try{node.focus({preventScroll:true});}catch(e){node.focus();}
     if(node.scrollIntoView)try{node.scrollIntoView({block:'nearest',inline:'nearest',behavior:'instant'});}catch(e){}
     if(page==='home'&&!modalOpen&&!movingId&&node.dataset.itemid){var item=lookup(node.dataset.itemid)||fallbackInput(node.dataset.itemid);if(item)preview(item);}}
-  function focusDirection(key){var items=allVisibleNav();if(!items.length)return;if(!selected||items.indexOf(selected)<0){setFocus(items[0]);return;}
+  function focusDirection(key){
+    if(!modalOpen&&page==='home'&&selected&&selected.closest('.home-footer')&&(key==='ArrowLeft'||key==='ArrowRight')){
+      var footer=qa('.home-footer .navitem').filter(function(n){return n.offsetWidth>0&&!n.disabled;}),index=footer.indexOf(selected),next=index+(key==='ArrowRight'?1:-1);
+      if(footer[next])setFocus(footer[next]);return;
+    }
+    var items=allVisibleNav();if(!items.length)return;if(!selected||items.indexOf(selected)<0){setFocus(items[0]);return;}
     function mid(n){var r=n.getBoundingClientRect();return{x:r.left+r.width/2,y:r.top+r.height/2};}
     var now=mid(selected),best=null,score=Infinity;items.forEach(function(n){if(n===selected)return;var to=mid(n),dx=to.x-now.x,dy=to.y-now.y;
       if((key==='ArrowRight'&&dx<=8)||(key==='ArrowLeft'&&dx>=-8)||(key==='ArrowDown'&&dy<=8)||(key==='ArrowUp'&&dy>=-8))return;
       var main=key==='ArrowRight'||key==='ArrowLeft'?Math.abs(dx):Math.abs(dy),cross=key==='ArrowRight'||key==='ArrowLeft'?Math.abs(dy):Math.abs(dx),s=main+cross*2.35;
       if(s<score){score=s;best=n;}});if(best)setFocus(best);}
-  function showPage(next,focus){if(selected)selected.classList.remove('is-focused');selected=null;previewGeneration++;clearTimeout(previewTimer);stopVideoPreview();page=next;
+  function settingsHomePreview(){
+    var panel=q('#settings-home-preview');
+    if(!panel){panel=el('aside','settings-home-preview');panel.id='settings-home-preview';panel.setAttribute('aria-hidden','true');panel.setAttribute('inert','');q('#app').appendChild(panel);}
+    panel.hidden=page!=='settings';if(panel.hidden)return;
+    // Clone only our own Home. No app screenshots, duplicate IDs or interactive controls.
+    fillHome();panel.textContent='';var scene=el('div','mini-home');
+    scene.appendChild(q('.backdrop').cloneNode(true));scene.appendChild(q('.scrim').cloneNode(true));
+    var app=el('div','app'),header=q('.masthead').cloneNode(true),home=q('#home').cloneNode(true);home.classList.remove('hidden');header.querySelector('#page-title').textContent='Home';
+    app.appendChild(header);app.appendChild(home);scene.appendChild(app);panel.appendChild(scene);
+    Array.prototype.slice.call(scene.querySelectorAll('[id]')).forEach(function(n){n.removeAttribute('id');});
+    Array.prototype.slice.call(scene.querySelectorAll('.navitem')).forEach(function(n){n.classList.remove('navitem','is-focused');n.disabled=true;n.tabIndex=-1;});
+    var sampleId=M.defaultSelection(state.focusDefault,recentItems(),inputList,favouriteItems(),state.inputNames,state.pcPort),sampleNodes=Array.prototype.slice.call(scene.querySelectorAll('[data-itemid]'));
+    var sampleNode=sampleNodes.find(function(n){return n.dataset.itemid===sampleId;})||scene.querySelector('.app-card');if(sampleNode)sampleNode.classList.add('preview-focused');
+    var sample=previewTarget(lookup(sampleId)||favouriteItems()[0]);
+    if(sample){
+      var sampleArt=scene.querySelector('.preview-art');sampleArt.textContent='';sampleArt.className='preview-art';
+      if(sample.kind==='input'){sampleArt.classList.add('preview-pc');sampleArt.appendChild(el('div','monitor-mock'));}
+      else{sampleArt.classList.add('art-'+brandClass(sample.name));var sampleLogo=logo(sample);sampleLogo.classList.add('hero-logo');sampleArt.appendChild(sampleLogo);}
+      scene.querySelector('.preview-title').textContent=itemName(sample);scene.querySelector('.preview-meta').textContent=sample.kind==='input'?sample.port:'';
+    }
+    Array.prototype.slice.call(scene.querySelectorAll('[data-action],[data-itemid],[data-zone]')).forEach(function(n){n.removeAttribute('data-action');n.removeAttribute('data-itemid');n.removeAttribute('data-zone');});
+    Array.prototype.slice.call(scene.querySelectorAll('.is-live')).forEach(function(n){n.classList.remove('is-live');});
+  }
+  function showPage(next,focus){var changed=next!==page;if(selected)selected.classList.remove('is-focused');selected=null;previewGeneration++;clearTimeout(previewTimer);stopVideoPreview();page=next;
     ['home','apps','inputs','edit','settings'].forEach(function(id){q('#'+id).classList.toggle('hidden',id!==next);});
     q('#page-title').textContent=({home:'Home',apps:'All Apps',inputs:'Inputs',edit:'Edit Home',settings:'Launcher Settings'})[next]||'Home';q('#view-subtitle').textContent='';
     if(next==='home')fillHome();if(next==='apps')fillApps();if(next==='inputs')fillInputs();if(next==='edit')fillEdit();if(next==='settings')fillSettings();
+    settingsHomePreview();
+    qa('.view-enter').forEach(function(n){n.classList.remove('view-enter');});if(changed&&!state.reducedMotion)q('#'+next).classList.add('view-enter');
     var dest=focus&&(focus.itemId?focusByItem(focus.itemId):focus.action?focusByAction(focus.action):null);if(dest)setFocus(dest);else{selected=null;focusFirst();}
   }
   function refreshView(name,itemId){showPage(name||page,itemId?{itemId:itemId}:null);}
@@ -382,11 +456,22 @@
   function diagnosticInfo(){var p=P.diagnostics(),s=['Mode: '+p.mode,'Installed applications: '+catalog.length,'Detected inputs: '+inputList.length,'Catalogue: '+diagnostics.status,
     'Last check: '+(diagnostics.lastCheck?new Date(diagnostics.lastCheck).toLocaleString('en-GB'):'Never'),
     'App discovery API: '+(p.appDiscovery?'Present':'Not available'),'HDMI preview API: '+(p.hdmiPreview?'Present':'Not available'),'Video state: '+p.video.operation+' / '+p.video.owner,'Video error: '+(p.video.lastError||'None'),
-    'Live preview setting: '+state.previewMode,'Weather: Open-Meteo, optional online calls',
+    'Preview setting: '+state.previewMode,'Weather: '+weatherStatus,'Weather error: '+(weatherError||'None'),'Wallpaper: '+wallpaperStatus,'App viewport: '+w.innerWidth+'×'+w.innerHeight+' (Samsung app UI limit: 1920×1080)',
     'Native Samsung Settings: handled by TV remote, not intercepted',
     'Last error: '+(diagnostics.error||'None')];
     modal('Diagnostics',s.join('  •  '),[{label:'Close',fn:function(){}}]);}
   function settingAction(name){var focus={action:name};
+    if(name==='setting-startup'){
+      modal('Startup and exit','Samsung All Settings → Advanced Features (or General & Privacy) → Start Screen Options. If Autorun Last App is available, turn it on and leave Cinematic TV as the last app before standby. Turn it off in the same menu to disable it. Support depends on the model and app; this launcher cannot promise autorun. Samsung Home remains available.',[
+        {label:'Exit Cinematic TV',fn:function(){stopVideoPreview().then(function(){P.exit();});}},
+        {label:'Close',fn:function(){}}
+      ]);return;
+    }
+    if(name==='setting-wallpaper-credits'){
+      modal('Daily photograph',dailyRecord?dailyRecord.title+'  •  '+dailyRecord.credit+'  •  '+dailyRecord.source+(dailyRecord.cached?'  •  Cached locally':''):'Choose Daily photograph under Wallpaper to load a Wikimedia Commons picture of the day. One image is cached locally; bundled scenery remains available offline.',[{label:'Close',fn:function(){}}]);
+      if(dailyRecord){var sourceLink=el('a','navitem pill','View image source');sourceLink.href=dailyRecord.source;sourceLink.target='_blank';sourceLink.rel='noopener noreferrer';q('#modal-actions').appendChild(sourceLink);}return;
+    }
+    if(name==='setting-weather-refresh'){weatherTime=0;refreshWeather(true);toast('Refreshing weather…');return;}
     if(name==='setting-setup'){maybeSetup(true);return;}
     if(name==='setting-profiles'){profilesMenu();return;}
     if(name==='setting-pc'){choosePC();return;}
@@ -407,11 +492,10 @@
     if(name==='setting-effects'){state.reducedEffects=!state.reducedEffects;save();applyAppearance();showPage('settings',focus);return;}
     if(name==='setting-adaptive'){state.adaptiveWeather=!state.adaptiveWeather;save();applyAppearance();showPage('settings',focus);return;}
 
-    if(name==='setting-layout'){var layouts=['cinematic','balanced','compact'];state.layout=layouts[(layouts.indexOf(state.layout)+1)%layouts.length];}
-    else if(name==='setting-focus'){var modes=['recent','pc','favourite'];state.focusDefault=modes[(modes.indexOf(state.focusDefault)+1)%modes.length];}
+    if(name==='setting-focus'){var modes=['recent','pc','favourite'];state.focusDefault=modes[(modes.indexOf(state.focusDefault)+1)%modes.length];}
     else if(name==='setting-preview'){
       if(state.previewMode==='off'){
-        modal('Experimental HDMI preview','This can temporarily switch the TV video source. It is untested on your S95H; enable only after confirming fullscreen HDMI works.',[
+        modal('Enable PC preview','This may play HDMI audio. Current-source-only remains enabled unless you explicitly allow source switching.',[
           {label:'Enable',fn:function(){state.previewMode='selected';save();showPage('settings',{action:name});}},
           {label:'Keep off',fn:function(){}}
         ]);return;
@@ -421,7 +505,7 @@
     else if(name==='setting-clock')state.showClock=!state.showClock;
     else if(name==='setting-city'){weatherLocation();return;}
     else if(name==='setting-unit'){state.tempUnit=state.tempUnit==='celsius'?'fahrenheit':'celsius';weatherTime=0;weatherInFlight=false;weatherRequest++;}
-    else if(name==='setting-wallpaper'){var walls=['scenic','twilight','dawn','dark','auto'];var idx=walls.indexOf(state.wallpaper);state.wallpaper=walls[(idx+1)%walls.length];}
+    else if(name==='setting-wallpaper'){var walls=['scenic','daily','twilight','dawn','dark','auto'];var idx=walls.indexOf(state.wallpaper);state.wallpaper=walls[(idx+1)%walls.length];}
     else if(name==='setting-custom'){customWallpaper();return;}
     else if(name==='setting-glow')state.glow=state.glow==='blue'?'white':'blue';
     else if(name==='setting-motion')state.reducedMotion=!state.reducedMotion;
@@ -450,8 +534,13 @@
   function setCatalogue(list){catalog=list;appById={};catalog.forEach(function(a){appById[a.id]=a;});}
   function setInputs(list){inputList=list;inputById={};list.forEach(function(i){inputById[i.id]=i;});}
   function refreshData(report){var gen=++refreshGeneration;diagnostics.status='Checking';diagnostics.lastCheck=Date.now();
-    P.getApps(function(raw){if(gen!==refreshGeneration)return;var previousAppIds=catalog.map(function(x){return x.id;});setCatalogue(M.catalogue(raw,P.currentId()));
-      try{localStorage.setItem(APP_CACHE,JSON.stringify(raw.filter(function(x){return x&&x.id&&x.id!==P.currentId();}).slice(0,350)));}catch(e){}
+    P.getApps(function(raw){if(gen!==refreshGeneration)return;var currentId=P.currentId(),previousAppIds=catalog.map(function(x){return x.id;});setCatalogue(M.catalogue(raw,currentId));
+      if(Array.isArray(state.favouriteIds))state.favouriteIds=M.remapCatalogueIds(state.favouriteIds,raw,catalog);
+      state.hiddenAppIds=M.remapCatalogueIds(state.hiddenAppIds,raw,catalog);state.profiles.forEach(function(p){p.favouriteIds=M.remapCatalogueIds(p.favouriteIds,raw,catalog);});
+      var recentSeen=Object.create(null);
+      state.recent=state.recent.map(function(x){var id=M.remapCatalogueIds([x.id],raw,catalog)[0];return{id:id,name:x.name,at:x.at};}).filter(function(x){if(recentSeen[x.id])return false;recentSeen[x.id]=true;return true;});
+      save();
+      try{localStorage.setItem(APP_CACHE,JSON.stringify(catalog.slice(0,350).map(function(a){return{id:a.nativeId,name:a.rawName||a.name,iconPath:a.icon,show:true};})));}catch(e){}
       diagnostics.status='Checked successfully';diagnostics.error='';
       if(hasCatalogue){var added=catalog.filter(function(x){return previousAppIds.indexOf(x.id)<0;}).length;if(added)toast(added+' new app'+(added===1?'':'s')+' available in All Apps');}hasCatalogue=true;
       if(state.favouriteIds===null){state.favouriteIds=M.initialFavourites(catalog,state.favouriteOrderNames);save();}
@@ -492,7 +581,7 @@
     if(storageGet('cinematic-tv-video-pending')==='1'){state.previewMode='off';save();videoMarker(false);logEvent('Recovery','Interrupted HDMI preview disabled');}
     if(w.LauncherRecovery&&w.LauncherRecovery.safe){state.previewMode='off';state.wallpaper='scenic';state.customWallpaperUrl='';state.showWeather=false;state.reducedEffects=true;save();}
     if(isDemo())q('#test-ribbon').classList.remove('hidden');applyAppearance();updateClock();refreshWeather();
-    setInterval(function(){if(!doc.hidden){updateClock();if(state.wallpaper==='auto')applyAppearance();}},30000);setInterval(function(){refreshWeather();},5*60*1000);
+    setInterval(function(){if(!doc.hidden){updateClock();if(state.wallpaper==='auto'||state.wallpaper==='daily')applyAppearance();}},30000);setInterval(function(){refreshWeather();},5*60*1000);
     doc.addEventListener('click',onClick);doc.addEventListener('keydown',onKeyDown);doc.addEventListener('keyup',onKeyUp);
     doc.addEventListener('focusin',function(e){if(e.target.classList&&e.target.classList.contains('navitem')&&e.target!==selected)setFocus(e.target);});
     qa('.filter').forEach(function(b){b.addEventListener('click',function(){filter=b.dataset.filter;fillApps();setFocus(b);});});
@@ -507,6 +596,7 @@
       clearTimeout(watchTimer);watchTimer=setTimeout(function(){refreshData(false);},120);
     });
     if(P.watchApps)unwatchApps=P.watchApps(function(){clearTimeout(watchTimer);watchTimer=setTimeout(function(){refreshData(false);},180);});
+    w.addEventListener('resize',function(){previewingId=null;if(page==='home'&&!modalOpen&&!fullscreenInput&&!launching)showPage('home',captureFocus());});
     w.addEventListener('online',function(){updateNetwork();refreshWeather(true);});w.addEventListener('offline',updateNetwork);
     w.addEventListener('blur',function(){clearTimeout(enterTimer);enterDown=false;enterLong=false;});
     w.addEventListener('pagehide',function(){if(unwatchInputs)unwatchInputs();if(unwatchApps)unwatchApps();P.leaveFullscreen().then(stopVideoPreview);});

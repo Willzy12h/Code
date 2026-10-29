@@ -10,11 +10,14 @@ with sync_playwright() as p:
     render(page);page.wait_for_timeout(400)
     assert page.locator('.is-focused').get_attribute('data-itemid')=='input:HDMI:1'
     assert page.locator('#preview.is-live').count()==1
-    assert page.locator('#preview-indicator').inner_text()=='● Live HDMI'
+    assert page.locator('#preview-indicator').is_hidden()
     page.locator('#favourites .app-card').first.focus();page.wait_for_timeout(80)
-    assert page.locator('#preview-title').inner_text()=='YouTube'
+    assert page.locator('#preview-title').inner_text()=='PC'
+    assert page.evaluate('window.__source.number')==1
+    assert page.locator('#preview.is-live').count()==1
+    page.locator('button[data-action="settings"]').click();page.wait_for_timeout(80)
     assert page.evaluate('window.__source.number')==2
-    assert page.locator('#preview.is-live').count()==0
+    page.keyboard.press('Escape')
     page.locator('#recent-list .navitem').first.focus();page.wait_for_timeout(240)
     assert page.evaluate('window.__source.number')==1
     page.keyboard.press('Enter');page.wait_for_timeout(100)

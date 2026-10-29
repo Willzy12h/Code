@@ -20,7 +20,7 @@ def chromium(p):
     if path: opts['executable_path']=path
     return p.chromium.launch(**opts)
 def prepare(page,settings=None,native=False):
-    state={'version':1,'setupDone':True}
+    state={'version':1,'setupDone':True,'previewMode':'off'}
     if settings: state.update(settings)
     page.set_default_timeout(1600)
     page.evaluate("""() => {Object.defineProperty(window,'localStorage',{configurable:true,value:{_d:{},getItem(k){return this._d[k]??null},setItem(k,v){this._d[k]=String(v)},removeItem(k){delete this._d[k]}}});}""")

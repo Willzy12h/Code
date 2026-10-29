@@ -3,6 +3,18 @@
   'use strict';
   var t = w.tizen, isTV = !!(t && t.application), iconCache = {};
   function error(cb, e) { if (typeof cb === 'function') cb(e && e.message ? e.message : String(e || 'Unsupported on this TV')); }
+  function fitVideoRect(rect,resolution){
+    if(!Array.isArray(rect)||rect.length!==4||rect.some(function(v){return !/^-?\d+(?:\.\d+)?(?:px)?$/.test(String(v));}))return rect;
+    var r=rect.map(parseFloat),ratio=16/9;
+    if(resolution){
+      if(resolution.aspectRatio==='ASPECT_RATIO_4x3')ratio=4/3;
+      else if(resolution.aspectRatio==='ASPECT_RATIO_16x9')ratio=16/9;
+      else if(Number(resolution.width)>0&&Number(resolution.height)>0)ratio=resolution.width/resolution.height;
+    }
+    if(!Number.isFinite(ratio)||ratio<.25||ratio>5||r[2]<=0||r[3]<=0)return rect;
+    var width=Math.min(r[2],r[3]*ratio),height=width/ratio;
+    return [r[0]+(r[2]-width)/2,r[1]+(r[3]-height)/2,width,height].map(function(n){return Math.round(n)+'px';});
+  }
   function sameSource(a, b) { return !!(a && b && a.type === b.type && Number(a.number) === Number(b.number)); }
 
   /* One owner for the native plane. A timeout is uncertainty, not cancellation:
@@ -39,7 +51,11 @@
       });
     }
     function setSource(s){return invoke('source change',function(ok,fail){tv.setSource(s,ok,fail,'MAIN');});}
-    function show(rect){return invoke('show',function(ok,fail){tv.show(ok,fail,rect,'MAIN','FRONT');});}
+    function show(rect){
+      var resolution=null;try{if(tv.getVideoResolution)resolution=tv.getVideoResolution('MAIN');}catch(e){}
+      var fitted=fitVideoRect(rect,resolution);
+      return invoke('show',function(ok,fail){tv.show(ok,fail,fitted,'MAIN','FRONT');});
+    }
     function hide(){return invoke('hide',function(ok,fail){tv.hide(ok,fail,'MAIN');});}
     async function finishOwned() {
       if(pending)throw new Error('Native HDMI callback still pending; use Samsung Sources to recover');
@@ -103,7 +119,7 @@
           originalSource=tv.getSource('MAIN');if(!originalSource)throw new Error('Cannot establish original source');
           previewSource=source;owner='fullscreen-pending';lastOperation='Opening HDMI input';
           await setSource(source);if(token!==generation)return false;
-          await show(['0px','0px','1920px','1080px']);if(token!==generation)return false;
+          await show(['0px','0px',(w.innerWidth||1920)+'px',(w.innerHeight||1080)+'px']);if(token!==generation)return false;
           owner='fullscreen';originalSource=null;lastOperation='Fullscreen HDMI';lastError='';if(ok)ok();return true;
         }catch(e){
           lastError=e.message||String(e);lastOperation='Fullscreen HDMI failed';if(token===generation)error(fail,e);
@@ -156,9 +172,15 @@
   var video = createVideoController(isTV && t.tvwindow ? t.tvwindow : null);
   var P = {
     isTV:isTV,
+    fitVideoRect:fitVideoRect,
     currentId:function () { try { return t.application.getAppInfo().id; } catch (e) { return ''; } },
     getApps:function (ok, fail) { if (!isTV) { ok(P.demoApps()); return; }
-      readWithTimeout(function(done,reject){t.application.getAppsInfo(done,reject);},ok,fail,'Application discovery'); },
+      readWithTimeout(function(done,reject){t.application.getAppsInfo(function(raw){
+        // WebIDL metadata may live on prototype getters; JSON.stringify(raw) can lose it.
+        var apps=[];(Array.isArray(raw)?raw:[]).slice(0,1000).forEach(function(a){
+          try{if(a&&typeof a.id==='string')apps.push({id:a.id,name:typeof a.name==='string'?a.name:'',iconPath:typeof a.iconPath==='string'?a.iconPath:'',show:a.show===true,packageId:typeof a.packageId==='string'?a.packageId:'',categories:Array.isArray(a.categories)?a.categories.filter(function(c){return typeof c==='string';}).slice(0,20):[]});}catch(e){}
+        });done(apps);
+      },reject);},ok,fail,'Application discovery'); },
     launch:launchApp,
     listInputs:function (ok, fail) { if (!isTV) { ok(P.demoInputs()); return; }
       readWithTimeout(function(done,reject){t.systeminfo.getPropertyValue('VIDEOSOURCE',done,reject);},ok,fail,'Input discovery'); },

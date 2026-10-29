@@ -14,11 +14,12 @@ with server() as url, sync_playwright() as p:
     def static_caption():
         page=fresh()
         monitor=page.locator('#preview-art .monitor-mock').bounding_box()
-        caption=page.locator('#preview-art .art-caption').bounding_box()
-        assert monitor and caption
-        assert monitor['y']+monitor['height']<=caption['y'], 'Static PC artwork overlaps its caption'
+        media=page.locator('#preview-media').bounding_box()
+        assert monitor and media
+        assert monitor['y']>=media['y'] and monitor['y']+monitor['height']<=media['y']+media['height']
+        assert page.locator('#preview-art .art-caption').inner_text()==''
         page.close()
-    case('Static PC artwork leaves its caption unobscured',static_caption)
+    case('Static PC artwork stays contained with no instructional caption',static_caption)
     def setup_remote():
         page=fresh({'setupDone':False},True)
         for key in ['ArrowUp','ArrowRight','ArrowDown','ArrowLeft','ArrowUp']:
@@ -40,7 +41,7 @@ with server() as url, sync_playwright() as p:
         page.get_by_role('button',name='Use recommended setup',exact=True).click()
         assert page.evaluate('JSON.parse(localStorage.getItem("cinematic-tv-v1")).setupDone') is True
         assert page.locator('#favourites .app-card').count()==8;page.close()
-    case('First-run setup is optional and does not enable HDMI preview',setup)
+    case('First-run setup preserves an explicit preview-off preference',setup)
     def extras():
         page=fresh();click(page,'settings');click(page,'setting-profiles')
         page.get_by_role('button',name='Save current Home',exact=True).click();page.locator('.dialog-input').fill('Entertainment');page.get_by_role('button',name='Save',exact=True).click()
@@ -65,9 +66,9 @@ with server() as url, sync_playwright() as p:
         assert page.evaluate('window.__calls.includes("show")');page.close()
     case('Quick Switch opens previous available source',quick_switch)
     def focus_refresh():
-        page=fresh(native=True);click(page,'settings');page.locator('[data-action="setting-layout"]').focus()
+        page=fresh(native=True);click(page,'settings');page.locator('[data-action="setting-glow"]').focus()
         page.evaluate('window.__inputCallback({})');page.wait_for_timeout(300)
-        assert page.locator('.is-focused').get_attribute('data-action')=='setting-layout'
+        assert page.locator('.is-focused').get_attribute('data-action')=='setting-glow'
         click(page,'setting-city');page.locator('.dialog-input').fill('Ealing')
         page.evaluate('window.__inputCallback({})');page.wait_for_timeout(300)
         assert page.locator('.dialog-input').input_value()=='Ealing'
@@ -88,7 +89,7 @@ with server() as url, sync_playwright() as p:
     def remote_preview_safety():
         page=fresh({'previewMode':'selected','recent':[{'id':'input:HDMI:2','at':10,'name':'Console'}]},True);page.wait_for_timeout(300)
         assert page.evaluate('!window.__calls.includes("source:2")')
-        assert 'OK' in page.locator('#preview').inner_text();page.close()
+        assert page.locator('#preview-title').inner_text()=='PC';assert page.evaluate('window.__source.number')==1;page.close()
     case('Highlighting a different HDMI input does not silently switch source by default',remote_preview_safety)
     def backup_download():
         page=fresh();click(page,'settings');click(page,'setting-backup')

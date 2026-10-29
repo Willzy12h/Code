@@ -18,9 +18,9 @@
   function nameOf(s){var name=safeText(s,80).trim();for(var i=0;i<ALIASES.length;i++)if(ALIASES[i][1].test(name))return ALIASES[i][0];return name||'Application';}
   function defaults(){return {
     version:1, favouriteIds:null, recent:[], view:'home',layout:'cinematic',recentCount:4,
-    showWeather:true,showClock:true,hdmiPreview:false,previewMode:'off',reducedMotion:false,glow:'blue',
+    showWeather:true,showClock:true,hdmiPreview:false,previewMode:'selected',reducedMotion:false,glow:'blue',
     city:'London',latitude:51.5074,longitude:-0.1278,tempUnit:'celsius',
-    inputNames:{},hideDisconnected:true,favouriteOrderNames:PRIMARY.slice(),wallpaper:'scenic',
+    inputNames:{},pcPort:'',hideDisconnected:true,favouriteOrderNames:PRIMARY.slice(),wallpaper:'scenic',
     customWallpaperUrl:'', focusDefault:'recent',hiddenAppIds:[],showHidden:false,
     longPressMs:190, previewBrand:'subtle', setupDone:false, showNetwork:false, quickSwitch:true,
     profiles:[], inputIcons:{}, adaptiveWeather:false, reducedEffects:false, autoPreviewCurrentOnly:true
@@ -60,12 +60,13 @@
     d.favouriteIds=Array.isArray(d.favouriteIds)?validIds(d.favouriteIds):null;
     d.recent=Array.isArray(d.recent)?d.recent.filter(function(x){return x&&validIds([x.id]).length===1;}).slice(0,30).map(function(r){return{id:r.id,name:safeText(r.name),at:between(r.at,0,9999999999999,0)};}):[];
     d.inputNames=namedMap(d.inputNames,false); d.inputIcons=namedMap(d.inputIcons,true);
+    if(typeof d.pcPort!=='string'||!/^HDMI \d{1,2}$/.test(d.pcPort))d.pcPort='';
     d.favouriteOrderNames=Array.isArray(d.favouriteOrderNames)?d.favouriteOrderNames.filter(function(x){return typeof x==='string' && x.trim();}).slice(0,30).map(function(x){return safeText(x,80);}):PRIMARY.slice();
     d.hiddenAppIds=validIds(d.hiddenAppIds,250).filter(function(x){return x.indexOf('app:')===0;});
     d.recentCount=Math.round(between(d.recentCount,2,6,4));
     d.longPressMs=between(d.longPressMs,170,450,190);
     if(['cinematic','balanced','compact'].indexOf(d.layout)<0)d.layout='cinematic';
-    if(['scenic','twilight','dawn','dark','custom','auto'].indexOf(d.wallpaper)<0)d.wallpaper='scenic';
+    if(['scenic','twilight','dawn','dark','custom','auto','daily'].indexOf(d.wallpaper)<0)d.wallpaper='scenic';
     if(['blue','white'].indexOf(d.glow)<0)d.glow='blue';
     if(['recent','pc','favourite'].indexOf(d.focusDefault)<0)d.focusDefault='recent';
     d.customWallpaperUrl=safeUrl(d.customWallpaperUrl);
@@ -74,6 +75,7 @@
     d.latitude=between(d.latitude,-90,90,51.5074); d.longitude=between(d.longitude,-180,180,-0.1278);
     d.tempUnit=d.tempUnit==='fahrenheit'?'fahrenheit':'celsius';
     d.hdmiPreview=d.hdmiPreview===true;
+    if(!Object.prototype.hasOwnProperty.call(p,'previewMode')&&Object.prototype.hasOwnProperty.call(p,'hdmiPreview'))d.previewMode=d.hdmiPreview?'selected':'off';
     d.previewMode=['off','selected'].indexOf(d.previewMode)>=0?d.previewMode:(d.hdmiPreview?'selected':'off');
     d.showWeather=d.showWeather!==false;d.showClock=d.showClock!==false;
     d.showHidden=d.showHidden===true;d.hideDisconnected=d.hideDisconnected!==false;
@@ -83,15 +85,50 @@
     d.autoPreviewCurrentOnly=d.autoPreviewCurrentOnly!==false;
     d.profiles=Array.isArray(d.profiles)?d.profiles.slice(0,8).filter(function(x){return x && typeof x.name==='string';}).map(function(x){
       return {name:safeText(x.name,32).trim()||'Home', favouriteIds:validIds(x.favouriteIds), layout:['cinematic','balanced','compact'].indexOf(x.layout)>=0?x.layout:'cinematic',
-        recentCount:Math.round(between(x.recentCount,2,6,4)),wallpaper:['scenic','dawn','twilight','dark','auto'].indexOf(x.wallpaper)>=0?x.wallpaper:'scenic',
+        recentCount:Math.round(between(x.recentCount,2,6,4)),wallpaper:['scenic','dawn','twilight','dark','auto','daily'].indexOf(x.wallpaper)>=0?x.wallpaper:'scenic',
         glow:x.glow==='white'?'white':'blue',reducedMotion:x.reducedMotion===true};
     }):[];
     return d;
   }
-  function catalogue(apps,myId){var out=[],seen=Object.create(null);(Array.isArray(apps)?apps:[]).slice(0,1000).forEach(function(a){
-    if(!a||typeof a.id!=='string'||!validIds(['app:'+a.id]).length||seen[a.id]||a.id===myId||a.show===false)return;
-    seen[a.id]=true;out.push({id:'app:'+a.id,nativeId:a.id,name:nameOf(a.name||a.id),icon:typeof a.iconPath==='string'?a.iconPath:'',rawName:safeText(a.name,120),kind:'app'});
-  });return out.sort(function(a,b){return a.name.localeCompare(b.name);});}
+  function catalogue(apps,myId){
+    var out=[],seen=Object.create(null),brands=PRIMARY.concat(['BBC iPlayer','ITVX','Channel 4','5','Spotify','Plex','Twitch','SmartThings','Samsung Health']);
+    var nativeNames=brands.concat(['Samsung TV Plus','Internet','Samsung Internet','Gallery','Gaming Hub','User Guide']);
+    (Array.isArray(apps)?apps:[]).slice(0,1000).forEach(function(a){
+      if(!a||typeof a.id!=='string'||!validIds(['app:'+a.id]).length||seen[a.id]||a.id===myId||a.show!==true)return;
+      var rawName=typeof a.name==='string'?a.name.trim():'',name=nameOf(rawName),system=/^(com\.samsung\.|org\.tizen\.)/i.test(a.id);
+      // Visible metadata can still describe firmware components, not consumer launch targets.
+      if(!rawName||(!a.id.includes('.')&&/[-_]/.test(a.id)))return;
+      if(/^(?:[a-z0-9_-]+\.){2,}[a-z0-9_-]+$/i.test(rawName))return;
+      if(rawName===a.id.split('.').pop()&&/[-_]/.test(rawName)&&!/^[A-Za-z0-9]{10}\./.test(a.id))return;
+      if(/(?:service|worker|daemon|agent|sourceprovider|deeplinker|dummy)$/i.test(a.id))return;
+      if(/(?:^|[ ._-])(?:service|worker|daemon|agent|ad ?player)(?:$|[ ._-])/i.test(rawName))return;
+      if(/^(?:adplatform\.|org\.volt\.apps$|\d{4}ePop\d+\.SmartTV$)/i.test(a.id))return;
+      if(/^[A-Za-z0-9]{10}\.(?:cmsWebApp|WebAccountExtension|CastSettingsApp|PrivacyChoices|OTApp)$/i.test(a.id))return;
+      // Observed TV inventory includes visible system tools and sibling background services.
+      if(system&&nativeNames.indexOf(name)<0)return;
+      if(/^[A-Za-z0-9]{10}\.(?:service|preview|cwservice|tilesservice|.*Service)$/i.test(a.id))return;
+      if(Array.isArray(a.categories)&&a.categories.some(function(c){return /(?:^|[\/.-])service$/i.test(c);}))return;
+      seen[a.id]=true;
+      var item={id:'app:'+a.id,nativeId:a.id,name:name,icon:typeof a.iconPath==='string'?a.iconPath:'',rawName:safeText(a.name,120),kind:'app'};
+      if(brands.indexOf(name)>=0){
+        var existing=out.findIndex(function(x){return x.name===name;});
+        if(existing>=0){
+          var packaged=/^[A-Za-z0-9]{10}\./.test(a.id),oldPackaged=/^[A-Za-z0-9]{10}\./.test(out[existing].nativeId);
+          if(packaged&&!oldPackaged)out[existing]=item;return;
+        }
+      }
+      out.push(item);
+    });return out.sort(function(a,b){return a.name.localeCompare(b.name);});
+  }
+  function remapCatalogueIds(ids,raw,list){
+    var mapping=Object.create(null);
+    (raw||[]).forEach(function(a){
+      if(!a||typeof a.id!=='string')return;var name=nameOf(a.name);
+      if(!ALIASES.some(function(alias){return alias[0]===name;}))return;
+      var visible=list.find(function(x){return x.name===name;});if(visible)mapping['app:'+a.id]=visible.id;
+    });
+    return unique((ids||[]).map(function(id){return mapping[id]||id;}));
+  }
   function initialFavourites(list,names){var out=[];(names||PRIMARY).forEach(function(n){var a=list.find(function(x){return x.name.toLowerCase()===n.toLowerCase();});if(a&&out.indexOf(a.id)<0)out.push(a.id);});return out.length?out:list.slice(0,8).map(function(x){return x.id;});}
   function orderedFavourites(ids,all){return(ids||[]).map(function(id){return all.find(function(x){return x.id===id;});}).filter(Boolean);}
   function recordRecent(recent,entry,time){if(!entry||!entry.id)return recent||[];var x={id:entry.id,name:safeText(entry.name),at:Number(time)||Date.now()};return[x].concat((recent||[]).filter(function(e){return e&&e.id!==x.id;})).slice(0,30);}
@@ -102,12 +139,12 @@
     out.push({id:id,kind:'input',name:typeof s.editName==='string'?safeText(s.editName,35):s.type+' '+s.number,port:s.type+' '+s.number,connected:kind==='connected',raw:s});
   });});return out.sort(function(a,b){return Number(b.connected)-Number(a.connected)||a.port.localeCompare(b.port);});}
   function detectCategory(name){var n=String(name||'').toLowerCase();if(/hue|smartthings|health/.test(n))return'Utilities';if(/spotify|music/.test(n))return'Music';return'Entertainment';}
-  function defaultSelection(focusDefault,recents,all,favourites,inputNames){
-    if(focusDefault==='pc'){var pc=all.find(function(a){return a.kind==='input'&&(a.port.indexOf('HDMI')===0)&&(String((inputNames||{})[a.port]||a.name).toLowerCase().indexOf('pc')>=0)&&a.connected;});if(pc)return pc.id;}
+  function defaultSelection(focusDefault,recents,all,favourites,inputNames,preferredPort){
+    if(focusDefault==='pc'){var pc=all.find(function(a){return a.kind==='input'&&(a.port.indexOf('HDMI')===0)&&(preferredPort?a.port===preferredPort:String((inputNames||{})[a.port]||a.name).toLowerCase().indexOf('pc')>=0)&&a.connected;});if(pc)return pc.id;}
     if(focusDefault==='favourite'&&favourites&&favourites.length)return favourites[0].id;
     var available=(recents||[]).find(function(x){return x.kind!=='input'||x.connected!==false;});
     if(available)return available.id;
     return favourites&&favourites.length?favourites[0].id:null;
   }
-  return{PRIMARY:PRIMARY,defaults:defaults,load:load,nameOf:nameOf,unique:unique,catalogue:catalogue,initialFavourites:initialFavourites,orderedFavourites:orderedFavourites,recordRecent:recordRecent,moveItem:moveItem,sources:sources,safeText:safeText,safeUrl:safeUrl,detectCategory:detectCategory,defaultSelection:defaultSelection};
+  return{remapCatalogueIds:remapCatalogueIds,PRIMARY:PRIMARY,defaults:defaults,load:load,nameOf:nameOf,unique:unique,catalogue:catalogue,initialFavourites:initialFavourites,orderedFavourites:orderedFavourites,recordRecent:recordRecent,moveItem:moveItem,sources:sources,safeText:safeText,safeUrl:safeUrl,detectCategory:detectCategory,defaultSelection:defaultSelection};
 }));

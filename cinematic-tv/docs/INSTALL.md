@@ -1,3 +1,5 @@
+> Current patch: [0.4.1 hardware feedback](TV-FEEDBACK-0.4.1.md). The user accepted initial live HDMI on the S95H and requested current-source PC preview on by default. Earlier default-off/layout notes below describe 0.4.0 and are historical; explicit Off, import and interruption recovery remain Off.
+
 # Sign and install Cinematic TV 0.4.0 using your existing SDK
 
 This is a Samsung Tizen **web application (`.wgt`)**, not an APK. The supplied code/staging is unsigned. Signing and the final TV test happen on your Windows PC; no reinstall of a working SDK is needed.

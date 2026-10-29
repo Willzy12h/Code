@@ -1,3 +1,5 @@
+> Current patch: [0.4.1 hardware feedback](TV-FEEDBACK-0.4.1.md). The user accepted initial live HDMI on the S95H and requested current-source PC preview on by default. Earlier default-off/layout notes below describe 0.4.0 and are historical; explicit Off, import and interruption recovery remain Off.
+
 > Update, 29 October 2026: GitHub branch `gpt/cinematic-tv-v0.4.0` is authoritative. The older ZIP/patch and earlier environment limitations below are historical. See [Windows validation](LOCAL-VALIDATION.md) for independently rerun local checks and outstanding signing/hardware acceptance.
 
 # Local Windows SDK / Codex handover

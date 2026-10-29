@@ -3,7 +3,7 @@ const test=require('node:test'),assert=require('node:assert/strict'),fs=require(
 const root=path.resolve(__dirname,'..');
 test('release identity, privilege and script staging are complete',()=>{
  const meta=require('../package.json'),xml=fs.readFileSync(path.join(root,'src/config.xml'),'utf8');
- assert.equal(meta.version,'0.4.0');assert.ok(xml.includes('version="'+meta.version+'"'));assert.ok(!xml.includes('example.org'));
+ assert.equal(meta.version,'0.4.1');assert.ok(xml.includes('version="'+meta.version+'"'));assert.ok(!xml.includes('example.org'));
  assert.ok(xml.includes('id="CinemTV001.Launcher"'));assert.ok(xml.includes('package="CinemTV001"'));
  assert.ok(xml.includes('http://tizen.org/privilege/package.info'));assert.ok(xml.includes('tizen:content-security-policy'));
  assert.ok(fs.existsSync(path.join(root,'src/assets/icon.png')));
@@ -17,7 +17,7 @@ test('backup import rejects a missing or malformed settings object',()=>{
  for(const settings of [undefined,null,[],"bad",{version:999}])assert.throws(()=>F.restoreBackup(JSON.stringify({format:'cinematic-tv-preferences',version:2,settings})));
 });
 test('catalogue rejects malformed IDs and does not merge unrelated named apps',()=>{
- const M=require('../src/js/model.js');const c=M.catalogue([{id:{},name:'Object'}, {id:'a',name:'Netflix Helper'},{id:'b',name:'Disney Clock'},{id:'c',name:'Netflix'}]);
+ const M=require('../src/js/model.js');const c=M.catalogue([{id:{},name:'Object'}, {id:'a',name:'Netflix Helper',show:true},{id:'b',name:'Disney Clock',show:true},{id:'c',name:'Netflix',show:true}]);
  assert.equal(c.length,3);assert.ok(c.some(x=>x.name==='Netflix Helper'));assert.ok(c.some(x=>x.name==='Disney Clock'));
 });
 test('all saved IDs are bounded and recently used count is an integer',()=>{

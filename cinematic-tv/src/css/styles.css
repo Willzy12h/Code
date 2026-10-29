@@ -43,3 +43,32 @@
 #modal-actions { flex-wrap:wrap; }
 #recovery-banner { position:fixed;inset:12% 12% auto;z-index:9999;padding:32px;background:#111d2e;color:white;border:2px solid white;font-size:25px; }
 #recovery-banner button { margin:16px;padding:16px;font:inherit; }
+
+/* Remote focus reads as a lifted tile, with a single crisp selection edge. */
+:root{--motion:150ms;--ease:cubic-bezier(.16,1,.3,1)}
+.logo img{width:88%;height:88%;object-fit:contain}
+.logo .brand-icon{width:80%;height:80%;display:flex;align-items:center;justify-content:center}
+.app-card .logo{border-color:rgba(255,255,255,.13);transition:transform 150ms var(--ease),box-shadow 150ms var(--ease),border-color 120ms ease}
+.app-card.is-focused .logo{transform:translateY(-.45vh) scale(1.065);border-color:rgba(255,255,255,.9);box-shadow:0 12px 28px rgba(0,0,0,.42),0 0 0 2px var(--accent)}
+.favourites-row{padding-top:1.5vh;padding-bottom:.4vh;scroll-padding-left:.7vw}
+.apps-grid{padding-top:1.5vh;padding-bottom:2vh}
+.recent-item.is-focused,.pill.is-focused,.setting-row.is-focused,.filter.is-focused,.edit-action.is-focused,.input-card.is-focused{box-shadow:0 8px 24px rgba(0,0,0,.3),0 0 0 2px var(--accent)!important;border-color:rgba(255,255,255,.7)!important}
+.view-enter{animation:menu-arrive 180ms var(--ease)}
+.modal:not(.hidden) .modal-card{animation:dialog-arrive 160ms var(--ease)}
+@keyframes menu-arrive{from{opacity:.65;transform:translateX(12px)}to{opacity:1;transform:translateX(0)}}
+@keyframes dialog-arrive{from{opacity:.7;transform:scale(.98)}to{opacity:1;transform:scale(1)}}
+#settings{width:49vw;margin-left:auto}
+#settings .settings-list{grid-template-columns:minmax(0,1fr);max-height:74vh;padding:.65vw}
+#settings .fineprint{font-size:1.25vh;line-height:1.5}
+.settings-home-preview{position:absolute;top:26vh;left:3.65vw;width:43vw;height:24.1875vw;overflow:hidden;border-radius:.9vw;box-shadow:0 16px 40px rgba(0,0,0,.3);pointer-events:none;background:#081523}
+.mini-home{position:relative;width:100vw;height:100vh;transform:scale(.43);transform-origin:top left;overflow:hidden}
+.mini-home button:disabled{opacity:1;cursor:default}
+::selection{background:#b9dafa;color:#101b2b}
+input{caret-color:#b9dafa}
+@media(prefers-reduced-motion:reduce){.view-enter,.modal-card{animation:none!important}.app-card .logo{transition:border-color 100ms ease;transform:none!important}}
+.reduced-motion .app-card.is-focused .logo{transform:none}
+body{position:relative}
+.logo.crunchyroll .logotext{font-size:2.05vh}.logo.apple-tv .logotext{font-size:2.7vh}.monitor-mock:after{content:"";height:5%}
+.spotlight{width:60.4vw}.preview-art .hero-logo{max-height:14.8vh}
+.app-card.preview-focused .logo{transform:translateY(-.45vh) scale(1.065);border-color:rgba(255,255,255,.9);box-shadow:0 12px 28px rgba(0,0,0,.42),0 0 0 2px var(--accent)}.recent-item.preview-focused{box-shadow:0 8px 24px rgba(0,0,0,.3),0 0 0 2px var(--accent);border-color:rgba(255,255,255,.7)}
+.reduced-motion .app-card.preview-focused .logo{transform:none}

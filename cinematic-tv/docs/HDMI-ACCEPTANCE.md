@@ -1,3 +1,5 @@
+> Current patch: [0.4.1 hardware feedback](TV-FEEDBACK-0.4.1.md). The user accepted initial live HDMI on the S95H and requested current-source PC preview on by default. Earlier default-off/layout notes below describe 0.4.0 and are historical; explicit Off, import and interruption recovery remain Off.
+
 # Live HDMI acceptance checklist — Samsung QE48S95HHEXXU
 
 **Implementation:** v0.4.0 includes an opt-in native TVWindow HDMI thumbnail and explicit fullscreen input switching. It is not yet hardware-validated. Use a locally signed test package. Video-plane overlay, CEC, audio and Samsung firmware behaviour cannot be confirmed using Chromium or a JavaScript mock.

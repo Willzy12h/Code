@@ -48,7 +48,7 @@
   }
   function resetSection(state,section){
     var groups={appearance:['layout','wallpaper','customWallpaperUrl','glow','reducedMotion','reducedEffects','adaptiveWeather'],
-      inputs:['inputNames','inputIcons','hideDisconnected'],history:['recent'],hidden:['hiddenAppIds','showHidden'],
+      inputs:['inputNames','inputIcons','pcPort','hideDisconnected'],history:['recent'],hidden:['hiddenAppIds','showHidden'],
       weather:['city','latitude','longitude','tempUnit','showWeather'],favourites:['favouriteIds']};
     if(!groups[section])throw new Error('Unknown reset section');
     var s=JSON.parse(JSON.stringify(state)),defaults=M.defaults();

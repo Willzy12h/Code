@@ -20,12 +20,12 @@ with sync_playwright() as p:
     assert page.locator('.is-focused').get_attribute('data-action')=='settings','Settings must be D-pad accessible'
     page.keyboard.press('Enter')
     assert page.locator('#page-title').inner_text()=='Launcher Settings'
-    before=page.locator('button[data-action="setting-layout"] .setting-value').inner_text()
-    page.locator('button[data-action="setting-layout"]').click()
-    assert page.locator('.is-focused').get_attribute('data-action')=='setting-layout','Settings must restore focus on change'
-    assert page.locator('button[data-action="setting-layout"] .setting-value').inner_text()!=before
+    before=page.locator('button[data-action="setting-glow"] .setting-value').inner_text()
+    page.locator('button[data-action="setting-glow"]').click()
+    assert page.locator('.is-focused').get_attribute('data-action')=='setting-glow','Settings must restore focus on change'
+    assert page.locator('button[data-action="setting-glow"] .setting-value').inner_text()!=before
     page.locator('button[data-action="setting-wallpaper"]').click()
-    assert page.locator('button[data-action="setting-wallpaper"] .setting-value').inner_text()=='Twilight'
+    assert page.locator('button[data-action="setting-wallpaper"] .setting-value').inner_text()=='Daily photograph'
     page.locator('button[data-action="setting-unit"]').click()
     assert page.locator('button[data-action="setting-unit"] .setting-value').inner_text()=='°F'
     page.screenshot(path=str(root/'settings-v0.2.0.png'),full_page=True)

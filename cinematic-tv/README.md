@@ -1,8 +1,8 @@
-# Cinematic TV 0.4.0
+# Cinematic TV 0.4.1
 
 A personal, remote-first Samsung Tizen TV launcher. The agreed Cinematic Spotlight layout is retained: recent apps/inputs on the left, an adaptive preview beside them, favourites below, and open scenic wallpaper. No recommendation feed, adverts, telemetry, accounts or custom screensaver.
 
-**Status: locally tested installation candidate, ready for signing with an existing Samsung TV certificate profile. Not yet signed or tested on a physical S95H.** A Samsung TV package is `.wgt`, not an Android APK.
+**Status: 0.4.1 hardware-feedback candidate; see [patch validation and remaining TV acceptance](docs/TV-FEEDBACK-0.4.1.md). The first 0.4.0 package was signed, installed and launched on the identified S95H.** A Samsung TV package is `.wgt`, not an Android APK.
 
 ## Start here: SDK already installed
 
@@ -27,9 +27,9 @@ The helper parser and Doctor have passed locally in Windows PowerShell 5.1 with 
 - App/input pinning, HDMI naming and icons, direct D-pad reordering, scrolling favourites, search and hidden apps.
 - Recent-first focus and **Previous** Quick Switch using launches observed through this launcher.
 - Optional first-run setup, up to eight named Home profiles, granular resets and preference backup/import with JSON file and text routes.
-- Automatic local Dawn/Scenic/Twilight wallpaper, optional weather adaptation and reduced glass effects.
+- Local Dawn/Scenic/Twilight, optional weather adaptation, cached Wikimedia daily photographs and reduced glass effects.
 - Open-Meteo weather with location/units, a 30-minute cache and a six-hour maximum stale fallback; network indicator explicitly reports browser link state, not internet reachability.
-- Optional live HDMI preview: default off; when enabled, defaults to the current TV source only. Preview may affect audio. Allowing temporary input switching requires a separate confirmation.
+- Persistent PC HDMI preview: default on for new installations; existing explicit Off, imports and recovery remain Off. The default policy only previews the current TV source. Preview may affect audio. Allowing temporary input switching requires a separate confirmation.
 - Serialised HDMI operations, timeout quarantine, late callback recovery, persistent interruption protection and an independent startup rescue control.
 - Single app-launch ownership, late-callback guards, held-OK handling, native key preservation and focus-safe catalogue refresh.
 - Installation/update catalogue listeners with cached fallback; diagnostics export and manual public release checks (the dedicated public repo is not yet available).
@@ -60,6 +60,8 @@ The workflow runs from either this standalone project or the existing `cinematic
 Scenic, Dawn and Twilight are bundled images derived from the generated design artwork. They load locally. Custom wallpapers are optional public HTTPS image URLs; the host receives the TV's IP. The manifest permits user-selected external images, while CSP restricts scripts and fetch connections to self and the named API hosts. URL validation does not guarantee where a remote domain resolves; do not use untrusted hosts.
 
 Weather uses Open-Meteo forecast/geocoding, with manually selected coordinates (default London). No GPS or automatic IP geolocation is used. Open-Meteo requires attribution; its free service is for non-commercial usage subject to provider terms. Source: https://open-meteo.com/ and https://open-meteo.com/en/terms
+
+Daily photograph is optional. Wikimedia receives the image/API requests; the app keeps one bounded local image and its attribution. Choose Wallpaper credits for the photographer, licence and source. Bundled scenery remains available without that service.
 
 Preferences and local launch history stay on the TV. Backups contain your preferences and chosen weather location, but omit history and always restore with live preview off. Diagnostics are bounded/redacted; review an export before sharing it. Public repo publication requires a licence decision; this candidate does not grant a new software licence or redistribute other projects' code.
 
