@@ -1,4 +1,4 @@
-> Optional experimental background return is available in 0.4.6, default Off. See [controls, limitations and physical trial](docs/TV-FEEDBACK-0.4.6.md). No internal Home configuration is changed.
+> Optional experimental background return is available in 0.4.7, default Off. See [controls, limitations and physical trial](docs/TV-FEEDBACK-0.4.7.md). No internal Home configuration is changed.
 
 # Cinematic TV 0.4.5
 

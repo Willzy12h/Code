@@ -115,3 +115,5 @@ body[data-page="home"] .brand,body[data-page="home"] .subtitle{display:none}
 .reduced-motion .focus-frame,.reduced-motion .wallpaper-next,.reduced-motion .ambient-shade{transition:none}
 @media(prefers-reduced-motion:reduce){.focus-frame,.wallpaper-next,.ambient-shade{transition:none!important}}
 .logo.spotify{background:#081b15}.logo.iplayer{background:#852951}.logo.bbc-sounds{background:#5c3019}.logo.samsung-health{background:#19394c}
+
+.return-status{display:block;margin-bottom:14px;color:#f4f8ff;font-size:1.15em;}

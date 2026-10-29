@@ -31,7 +31,15 @@ jobs:
         run: |
           python -m pip install -r "$PROJECT/tests/requirements.txt"
           python -m playwright install --with-deps chromium
+      - name: Check sandbox-capable installed Chrome
+        run: |
+          test -x /opt/google/chrome/chrome
+          google-chrome --version
       - name: Syntax, unit, manifest and behaviour gates
+        env:
+          # Ubuntu's existing Chrome AppArmor profile permits its native sandbox.
+          # Do not disable AppArmor, user namespace restrictions, or Chromium sandboxing.
+          SANDBOXED_CHROMIUM_CHANNEL: chrome
         run: cd "$PROJECT" && npm run verify
       - name: Real-origin resource and CSP smoke test
         run: cd "$PROJECT" && npm run test:served

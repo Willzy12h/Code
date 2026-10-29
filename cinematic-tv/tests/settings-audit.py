@@ -33,9 +33,10 @@ with sync_playwright() as p:
     audit('setting-setup',setup)
     def startup(page):
         click(page,'setting-startup');text=page.locator('#modal-text').inner_text()
-        assert 'experimental return' in text and 'does not replace Home' in text and 'Off' in text
-        assert page.get_by_role('button',name='Open Samsung Home and pause return',exact=True).count()==1
-        assert page.get_by_role('button',name='Enable background return (experimental)',exact=True).count()==1
+        assert 'experimental mode' in text and 'does not enable cold-boot startup' in text
+        assert page.locator('#return-status').inner_text()=='Automatic return: Off'
+        assert page.get_by_role('button',name='Open Samsung Home (pause return)',exact=True).count()==1
+        assert page.get_by_role('button',name='Turn automatic return on',exact=True).count()==1
         button(page,'Exit Cinematic TV');page.wait_for_timeout(40);assert page.evaluate("window.__calls.includes('exit')")
     audit('setting-startup',startup)
     def profiles(page):

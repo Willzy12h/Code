@@ -1,7 +1,7 @@
 /* Cinematic TV v0.4 — remote-first Samsung TV launcher. */
 (function(w,doc){
   'use strict';
-  var M=w.LauncherModel,P=w.LauncherPlatform,F=w.LauncherFeatures,U=w.LauncherPresentation,VERSION='0.4.6';
+  var M=w.LauncherModel,P=w.LauncherPlatform,F=w.LauncherFeatures,U=w.LauncherPresentation,VERSION='0.4.7';
   var STORAGE='cinematic-tv-v1', APP_CACHE='cinematic-tv-apps-v2', WEATHER_CACHE='cinematic-tv-weather-v1';
   function storageGet(key){try{return localStorage.getItem(key);}catch(e){return null;}}
   var state=M.load(storageGet(STORAGE)),page='home',filter='All',searchTerm='',selected=null,modalOpen=false,modalReturn=null;
@@ -264,7 +264,7 @@
   function fillSettings(){var area=q('#settings-list');area.textContent='';
     var rows=[
       ['First-run setup','Review the initial choices without resetting anything','Open','setting-setup'],
-      ['Startup and exit','Samsung startup options and leaving the launcher','View options','setting-startup'],
+      ['Automatic return and exit','Return after other apps, Samsung Home access and exit','Return: '+returnStatusLabel(),'setting-startup'],
       ['Home profiles','Save and switch favourites and appearance',state.profiles.length?state.profiles.length+' presets':'No presets saved','setting-profiles'],
       ['Choose PC input','Name and pin the actual PC port without switching it','Choose','setting-pc'],
       ['Default Home selection','Last used, PC or first favourite',{recent:'Last used',pc:'PC',favourite:'Favourite'}[state.focusDefault],'setting-focus'],
@@ -559,17 +559,23 @@
     'Background return: '+JSON.stringify(returnMode.status()),
     'Last error: '+(diagnostics.error||'None')];
     modal('Diagnostics',s.join('  •  '),[{label:'Close',fn:function(){}}]);}
+  function returnStatusLabel(){var s=returnMode.status();return s.enabled?(s.paused?'Paused':'On'):'Off';}
   function settingAction(name){var focus={action:name};
     if(name==='setting-dimming'){state.autoDimming=!state.autoDimming;save();applyAppearance();showPage('settings',focus);refreshWeather();return;}
     if(name==='setting-manage-hidden'){manageHiddenApps();return;}
     if(name==='setting-startup'){
       var status=returnMode.status();
-      modal('Startup and exit','Optional experimental return reopens Cinematic TV when Samsung Home is detected. It does not replace Home or guarantee startup. Return is '+(status.enabled?(status.paused?'paused until you reopen Cinematic TV':'On'):'Off')+'. Open Samsung Home below pauses return until you manually reopen Cinematic TV. Back from this launcher exits normally. '+(status.error||''),[
-        {label:status.enabled?'Disable background return':'Enable background return (experimental)',fn:function(){configureReturn(!status.enabled).then(function(on){toast(on?'Background return enabled':status.enabled?'Background return disabled':'Return unavailable or disabled');settingAction('setting-startup');});}},
-        {label:'Open Samsung Home and pause return',fn:openSamsungHome},
+      var label=returnStatusLabel(),row=q('[data-action="setting-startup"] .setting-value');if(row)row.textContent='Return: '+label;
+      var message=status.enabled?(status.paused?'Samsung Home will stay open until you manually reopen Cinematic TV.':'Cinematic TV reopens after you leave an app and Samsung Home appears. You may see Samsung Home briefly.'):'Samsung Home stays open after you leave other apps. Turn automatic return on to reopen Cinematic TV instead.';
+      message+=' This experimental mode does not enable cold-boot startup. Opening Samsung Home below pauses return until you manually reopen Cinematic TV.';
+      if(status.error)message+=' '+status.error;
+      modal('Automatic return and exit',message,[
+        {label:status.enabled?'Turn automatic return off':'Turn automatic return on',fn:function(){configureReturn(!status.enabled).then(function(on){toast(on?'Automatic return is now on':status.enabled?'Automatic return is now off':'Could not turn on automatic return. Check Diagnostics.');settingAction('setting-startup');});}},
+        {label:'Open Samsung Home (pause return)',fn:openSamsungHome},
         {label:'Exit Cinematic TV',fn:function(){++returnSetup;returnMode.pause();stopVideoPreview().then(function(){P.exit();});}},
         {label:'Close',fn:function(){}}
-      ]);return;
+      ]);
+      var current=el('strong','return-status','Automatic return: '+label);current.id='return-status';current.setAttribute('role','status');q('#modal-text').insertBefore(current,q('#modal-text').firstChild);return;
     }
     if(name==='setting-wallpaper-credits'){
       modal('Daily photograph',dailyRecord?dailyRecord.title+'  •  '+dailyRecord.credit+'  •  '+dailyRecord.source+(dailyRecord.cached?'  •  Cached locally':''):'Choose Daily photograph under Wallpaper to load a Wikimedia Commons picture of the day. One image is cached locally; bundled scenery remains available offline.',[{label:'Close',fn:function(){}}]);
