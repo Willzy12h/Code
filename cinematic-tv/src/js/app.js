@@ -1,7 +1,7 @@
 /* Cinematic TV v0.4 — remote-first Samsung TV launcher. */
 (function(w,doc){
   'use strict';
-  var M=w.LauncherModel,P=w.LauncherPlatform,F=w.LauncherFeatures,VERSION='0.4.3';
+  var M=w.LauncherModel,P=w.LauncherPlatform,F=w.LauncherFeatures,VERSION='0.4.4';
   var STORAGE='cinematic-tv-v1', APP_CACHE='cinematic-tv-apps-v2', WEATHER_CACHE='cinematic-tv-weather-v1';
   function storageGet(key){try{return localStorage.getItem(key);}catch(e){return null;}}
   var state=M.load(storageGet(STORAGE)),page='home',filter='All',searchTerm='',selected=null,modalOpen=false,modalReturn=null;
@@ -133,7 +133,7 @@
   function matchApp(name){return catalog.find(function(a){return a.name===name;});}
   function brandClass(name){name=M.nameOf(name).toLowerCase();var match=[['youtube','youtube'],['crunchyroll','crunchyroll'],['apple','apple-tv'],['netflix','netflix'],['paramount','paramount'],['disney','disney'],['prime','prime'],['hue','hue'],['spotify','spotify'],['plex','plex'],['iplayer','iplayer'],['twitch','twitch'],['itvx','itvx']];for(var i=0;i<match.length;i++)if(name===match[i][0]||name===({apple:'apple tv',paramount:'paramount+',disney:'disney+',prime:'prime video',hue:'hue sync',iplayer:'bbc iplayer'})[match[i][0]])return match[i][1];return'neutral';}
   function brandText(name){var words={'YouTube':'▶','Crunchyroll':'crunchyroll','Apple TV':'Apple TV','Netflix':'N','Paramount+':'Paramount+','Disney+':'Disney+','Prime Video':'prime video','Hue Sync':'hue','Plex':'PLEX','Spotify':'Spotify','BBC iPlayer':'BBC','ITVX':'itvx','5':'5','Channel 4':'4','Twitch':'Twitch','Samsung Health':'Health','SmartThings':'SmartThings'};return words[name]||String(name||'App').slice(0,17);}
-  function logo(item){var name=itemName(item),l=el('div','logo '+brandClass(name));var word=el('span','logotext',item.kind==='input'?F.inputGlyph(state.inputIcons[item.port]):brandText(name));l.appendChild(word);
+  function logo(item){var name=itemName(item),bundled=item.kind==='app'&&w.LauncherArtwork&&Object.prototype.hasOwnProperty.call(w.LauncherArtwork,name)?w.LauncherArtwork[name]:null,l=el('div','logo '+brandClass(name));var word=el('span','logotext',item.kind==='input'?F.inputGlyph(state.inputIcons[item.port]):brandText(name));l.appendChild(word);
     if(item.kind==='input'){
       word.textContent='';word.classList.add('input-mark');
       var monitor=doc.createElementNS('http://www.w3.org/2000/svg','svg');monitor.setAttribute('viewBox','0 0 100 76');monitor.setAttribute('aria-hidden','true');
@@ -147,7 +147,12 @@
       var rect=doc.createElementNS(svg.namespaceURI,'rect');rect.setAttribute('x','3');rect.setAttribute('y','7');rect.setAttribute('width','84');rect.setAttribute('height','50');rect.setAttribute('rx','13');rect.setAttribute('fill','#ff0033');
       var play=doc.createElementNS(svg.namespaceURI,'path');play.setAttribute('d','M36 20 L59 32 L36 44 Z');play.setAttribute('fill','#fff');svg.appendChild(rect);svg.appendChild(play);word.appendChild(svg);
     }
-    if(item.kind==='app'&&name!=='YouTube'&&item.icon&&P.isTV){var img=el('img','native-icon');img.alt='';img.onload=function(){word.style.display='none';};img.onerror=function(){img.remove();word.style.display='';};
+    if(bundled){
+      word.textContent='';word.classList.add('bundled-mark');
+      var mark=doc.createElementNS('http://www.w3.org/2000/svg','svg');mark.setAttribute('viewBox','0 0 24 24');mark.setAttribute('aria-hidden','true');
+      var geometry=doc.createElementNS(mark.namespaceURI,'path');geometry.setAttribute('d',bundled.path);geometry.setAttribute('fill',bundled.fill);mark.appendChild(geometry);word.appendChild(mark);
+    }
+    if(item.kind==='app'&&!bundled&&name!=='YouTube'&&item.icon&&P.isTV){var img=el('img','native-icon');img.alt='';img.onload=function(){word.style.display='none';};img.onerror=function(){img.remove();word.style.display='';};
       if(iconLoads[item.icon])img.src=iconLoads[item.icon];else P.resolveIcon(item.icon,function(url){iconLoads[item.icon]=url;img.src=url;});l.appendChild(img);}
     return l;}
   function button(action,cls,item){var b=el('button','navitem '+(cls||''));b.type='button';if(action)b.dataset.action=action;if(item)b.dataset.itemid=item.id;return b;}
@@ -170,8 +175,8 @@
   function fillFavourites(){var area=q('#favourites');area.textContent='';favouriteItems().forEach(function(item){area.appendChild(appCard(item,'favourites'));});
     q('#favourites-count').textContent=(state.favouriteIds||[]).length>8?'Use ← → for more':'';
     if(!area.children.length){var b=button('apps','pill');b.textContent='Add favourite apps';area.appendChild(b);}}
-  function fillApps(){var area=q('#apps-grid');area.textContent='';var query=searchTerm.toLowerCase();catalog.filter(function(item){return(state.showHidden||state.hiddenAppIds.indexOf(item.id)<0)&&(filter==='All'||M.detectCategory(item.name)===filter)&&(!query||item.name.toLowerCase().indexOf(query)>=0);}).forEach(function(item){var card=appCard(item,'apps');if(state.favouriteIds&&(state.favouriteIds||[]).indexOf(item.id)>=0)card.title='Pinned to Home';area.appendChild(card);});
-    qa('.filter').forEach(function(b){b.classList.toggle('active',b.dataset.filter===filter);});q('#search-status').textContent=searchTerm?'Search: '+searchTerm:'';
+  function fillApps(){var area=q('#apps-grid');area.textContent='';q('[data-action="manage-hidden"]').textContent='Hidden apps ('+catalog.filter(function(a){return state.hiddenAppIds.indexOf(a.id)>=0;}).length+')';var query=searchTerm.toLowerCase();catalog.filter(function(item){return(state.showHidden||state.hiddenAppIds.indexOf(item.id)<0)&&(filter==='All'||M.detectCategory(item.name)===filter)&&(!query||item.name.toLowerCase().indexOf(query)>=0);}).forEach(function(item){var card=appCard(item,'apps');if(state.favouriteIds&&(state.favouriteIds||[]).indexOf(item.id)>=0)card.title='Pinned to Home';area.appendChild(card);});
+    qa('.filter[data-filter]').forEach(function(b){b.classList.toggle('active',b.dataset.filter===filter);});q('#search-status').textContent=searchTerm?'Search: '+searchTerm:'';
     if(!area.children.length)area.appendChild(el('div','empty-placeholder','No matching apps. Clear the search, enable hidden apps or refresh the catalogue.'));}
   function fillInputs(){var area=q('#input-grid');area.textContent='';inputList.forEach(function(item){var b=button('','input-card',item);b.dataset.zone='inputs';b.appendChild(el('span','input-icon',F.inputGlyph(state.inputIcons[item.port])));var body=el('div');body.appendChild(el('div','input-name',itemName(item)));body.appendChild(el('div','input-port',item.port));body.appendChild(el('div',item.connected?'connected':'disconnected',item.connected?'● Connected':'○ Not connected'));if((state.favouriteIds||[]).indexOf(item.id)>=0)body.appendChild(el('div','pinned-indicator','★ Pinned to Home'));b.appendChild(body);b.onclick=function(){activate(item);};area.appendChild(b);});
     if(!area.children.length)area.appendChild(el('div','empty-placeholder','No HDMI inputs have been reported by the television.'));}
@@ -206,7 +211,7 @@
       ['Long-press OK','Edit shortcut rather than launch',state.longPressMs+' ms','setting-hold'],
       ['Disconnected inputs','Hide from recent activity only',state.hideDisconnected?'Hidden':'Shown','setting-disconnected'],
       ['Rename HDMI','Rename any input, even disconnected','Edit','setting-rename'],
-      ['Hidden apps','Show apps you hid; system services stay excluded',state.showHidden?'Shown':'Hidden','setting-hidden'],
+      ['Include hidden apps','Show user-hidden entries in All Apps; services stay excluded',state.showHidden?'Shown':'Hidden','setting-hidden'],
       ['Manage favourites','Add, remove and reposition apps and inputs','Edit','edit'],
       ['Search installed apps','Find an app by name','Search','setting-search'],
       ['Refresh catalogue','Recheck applications and input state','Refresh','setting-refresh'],
@@ -216,6 +221,7 @@
       ['Export diagnostics','Redacted events; no DUID, certificate or watch history','Download','setting-log-export'],
       ['Reset a section','Preserve the rest of your configuration','Choose','setting-resets'],
       ['Backup preferences','Export or restore local launcher choices','Manage','setting-backup'],
+      ['Manage hidden apps','Restore individual apps without changing Home pins',catalog.filter(function(a){return state.hiddenAppIds.indexOf(a.id)>=0;}).length,'setting-manage-hidden'],
       ['Reset launcher','Clear configuration and recent activity','Reset','setting-reset']
     ];rows.forEach(function(r){area.appendChild(setting.apply(null,r));});
   }
@@ -429,6 +435,14 @@
     actions.push({label:'Cancel',fn:function(){}});
     modal(itemName(item),'Manage this shortcut without uninstalling anything.',actions);
   }
+  function manageHiddenApps(){
+    var listed=catalog.filter(function(a){return state.hiddenAppIds.indexOf(a.id)>=0;}),from=page;
+    function restore(ids){state.hiddenAppIds=state.hiddenAppIds.filter(function(id){return ids.indexOf(id)<0;});save();showPage(from,from==='apps'?{action:'manage-hidden'}:{action:'setting-manage-hidden'});manageHiddenApps();}
+    var actions=listed.map(function(item){return{label:'Restore '+itemName(item),fn:function(){restore([item.id]);}};});
+    if(listed.length>1)actions.push({label:'Restore all listed',fn:function(){restore(listed.map(function(a){return a.id;}));}});
+    actions.push({label:'Done',fn:function(){}});
+    modal('Hidden apps',listed.length?'Restore an app to All Apps and recent activity. Home pins are preserved. Unavailable apps stay hidden until they return; system services are never listed.':'No installed apps are hidden. Hold OK on an app in All Apps to hide it. This does not uninstall apps or remove Home pins.',actions);
+  }
   function pinInput(){if(!inputList.length){toast('No HDMI sources detected');return;}
     modal('Pin an input','Choose an input to add or remove from your favourites.',inputList.filter(function(i){return i.port.indexOf('HDMI')===0;}).map(function(i){return{label:((state.favouriteIds||[]).indexOf(i.id)>=0?'★ ':'＋ ')+itemName(i)+' ('+i.port+')',fn:function(){toggleFavourite(i);showPage('edit',{itemId:i.id});}};}).concat([{label:'Cancel',fn:function(){}}]));}
   function renameInput(){var list=inputList.filter(function(x){return x.port.indexOf('HDMI')===0;});
@@ -471,6 +485,7 @@
     'Last error: '+(diagnostics.error||'None')];
     modal('Diagnostics',s.join('  •  '),[{label:'Close',fn:function(){}}]);}
   function settingAction(name){var focus={action:name};
+    if(name==='setting-manage-hidden'){manageHiddenApps();return;}
     if(name==='setting-startup'){
       modal('Startup and exit','Samsung All Settings → Advanced Features (or General & Privacy) → Start Screen Options. If Autorun Last App is available, turn it on and leave Cinematic TV as the last app before standby. Turn it off in the same menu to disable it. Support depends on the model and app; this launcher cannot promise autorun. Samsung Home remains available.',[
         {label:'Exit Cinematic TV',fn:function(){stopVideoPreview().then(function(){P.exit();});}},
@@ -535,7 +550,7 @@
     }else return;
     save();applyAppearance();showPage('settings',focus);refreshWeather(name==='setting-weather'||name==='setting-unit');
   }
-  function doAction(action){if(launching)return;firstDataRender=false;if(action==='quick-switch'){quickSwitch();return;}if(action==='apps'){editingFromApps=false;showPage('apps');}
+  function doAction(action){if(launching)return;firstDataRender=false;if(action==='manage-hidden'){manageHiddenApps();return;}if(action==='quick-switch'){quickSwitch();return;}if(action==='apps'){editingFromApps=false;showPage('apps');}
     else if(action==='inputs')showPage('inputs');else if(action==='edit')showPage('edit');
     else if(action==='editadd'){editingFromApps=true;showPage('apps');toast('Select an app to pin or unpin it');}
     else if(action==='editinput')pinInput();else if(action==='search-apps')searchApps();
@@ -594,7 +609,7 @@
     setInterval(function(){if(!doc.hidden){updateClock();if(state.wallpaper==='auto'||state.wallpaper==='daily')applyAppearance();}},30000);setInterval(function(){refreshWeather();},5*60*1000);
     doc.addEventListener('click',onClick);doc.addEventListener('keydown',onKeyDown);doc.addEventListener('keyup',onKeyUp);
     doc.addEventListener('focusin',function(e){if(e.target.classList&&e.target.classList.contains('navitem')&&e.target!==selected)setFocus(e.target);});
-    qa('.filter').forEach(function(b){b.addEventListener('click',function(){filter=b.dataset.filter;fillApps();setFocus(b);});});
+    qa('.filter[data-filter]').forEach(function(b){b.addEventListener('click',function(){filter=b.dataset.filter;fillApps();setFocus(b);});});
     doc.addEventListener('visibilitychange',function(){if(doc.hidden){
       previewGeneration++;clearTimeout(previewTimer);
       if(launching&&launching.kind==='app'&&launching.accepted){var item=lookup(launching.id);if(item){state.recent=M.recordRecent(state.recent,{id:item.id,name:itemName(item)},Date.now());save();}}

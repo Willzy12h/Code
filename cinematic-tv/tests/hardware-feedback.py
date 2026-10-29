@@ -90,7 +90,8 @@ with sync_playwright() as p:
     case('Appearance settings show an inert Home preview instead of ineffective layout choices',settings_preview)
     def icon_focus():
         page=browser.new_page(viewport={'width':1920,'height':1080})
-        prepare(page,{'previewMode':'off'},True)
+        prepare(page,{'previewMode':'off','favouriteIds':['app:native.0','app:native.1']},True)
+        page.evaluate("window.__apps[1].name='Personal Player'")
         page.evaluate("(url)=>window.__apps[1].iconPath=url", 'data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20width=%22256%22%20height=%22256%22%3E%3Crect%20width=%22256%22%20height=%22256%22%20fill=%22red%22/%3E%3C/svg%3E')
         render(page);page.wait_for_timeout(200)
         tile=page.locator('#favourites .app-card').nth(1);tile.focus();page.wait_for_timeout(260)

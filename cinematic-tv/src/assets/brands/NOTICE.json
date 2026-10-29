@@ -1,0 +1,58 @@
+{
+  "project": "Simple Icons",
+  "version": "16.36.0",
+  "commit": "2f67e5d1a7e5cba43c79a0ebc00abcd95fb0ea30",
+  "project_licence": "CC0-1.0; see LICENSE.txt and DISCLAIMER.txt; trademarks remain with their owners",
+  "changes": "SVG path geometry retained; rendered locally with foreground colours; no executable upstream code bundled",
+  "icons": [
+    {
+      "name": "Crunchyroll",
+      "upstream_svg": "https://raw.githubusercontent.com/simple-icons/simple-icons/2f67e5d1a7e5cba43c79a0ebc00abcd95fb0ea30/icons/crunchyroll.svg",
+      "sha256": "3b9c3d87339e18ec09f25e0c3eaffdc5ad4630df3d108fcd907e1b64c4cd13ea",
+      "brand_source": "https://www.crunchyroll.com",
+      "individual_licence": null
+    },
+    {
+      "name": "Apple TV",
+      "upstream_svg": "https://raw.githubusercontent.com/simple-icons/simple-icons/2f67e5d1a7e5cba43c79a0ebc00abcd95fb0ea30/icons/appletv.svg",
+      "sha256": "49b3f33707b7487f43dbaa0bcc364a0a57fc4dd46caa575b580220323b152ea7",
+      "brand_source": "https://en.wikipedia.org/wiki/File:Apple_TV_(logo).svg",
+      "individual_licence": null
+    },
+    {
+      "name": "Netflix",
+      "upstream_svg": "https://raw.githubusercontent.com/simple-icons/simple-icons/2f67e5d1a7e5cba43c79a0ebc00abcd95fb0ea30/icons/netflix.svg",
+      "sha256": "67dbc495988bd5667a09ed4f56e14db4070a44c7a74e297b146c229f70fd6f6e",
+      "brand_source": "https://brand.netflix.com/en/assets/logos",
+      "individual_licence": null
+    },
+    {
+      "name": "Paramount+",
+      "upstream_svg": "https://raw.githubusercontent.com/simple-icons/simple-icons/2f67e5d1a7e5cba43c79a0ebc00abcd95fb0ea30/icons/paramountplus.svg",
+      "sha256": "6b8a777222266eefdb08b9737cef97cdecf10143f5402d06634f615b127851f9",
+      "brand_source": "https://www.paramount.com/brand/paramount-plus",
+      "individual_licence": null
+    },
+    {
+      "name": "Spotify",
+      "upstream_svg": "https://raw.githubusercontent.com/simple-icons/simple-icons/2f67e5d1a7e5cba43c79a0ebc00abcd95fb0ea30/icons/spotify.svg",
+      "sha256": "b9ec9bec7769c35643981586d6ea0d675aaf3871b32f8a291bcac7a87fff0bc1",
+      "brand_source": "https://developer.spotify.com/documentation/general/design-and-branding/#using-our-logo",
+      "individual_licence": null
+    },
+    {
+      "name": "Plex",
+      "upstream_svg": "https://raw.githubusercontent.com/simple-icons/simple-icons/2f67e5d1a7e5cba43c79a0ebc00abcd95fb0ea30/icons/plex.svg",
+      "sha256": "129500c2bda2175c95402d12e0a96642de61a2561d45a4d9719edc8abd43c8ea",
+      "brand_source": "https://brand.plex.tv",
+      "individual_licence": null
+    },
+    {
+      "name": "Twitch",
+      "upstream_svg": "https://raw.githubusercontent.com/simple-icons/simple-icons/2f67e5d1a7e5cba43c79a0ebc00abcd95fb0ea30/icons/twitch.svg",
+      "sha256": "dbe27bc02a01b8d89b6259cacef328c9fa70bb13c29f38c36eb1421863f6f0b6",
+      "brand_source": "https://brand.twitch.tv",
+      "individual_licence": null
+    }
+  ]
+}

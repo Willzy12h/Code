@@ -1,8 +1,8 @@
-# Cinematic TV 0.4.3
+# Cinematic TV 0.4.4
 
 A personal, remote-first Samsung Tizen TV launcher. The agreed Cinematic Spotlight layout is retained: recent apps/inputs on the left, an adaptive preview beside them, favourites below, and open scenic wallpaper. No recommendation feed, adverts, telemetry, accounts or custom screensaver.
 
-**Status: 0.4.3 hardware-feedback candidate; see [patch validation and remaining TV acceptance](docs/TV-FEEDBACK-0.4.1.md). Signed 0.4.0, 0.4.1 and 0.4.2 packages were installed and launched on the identified S95H. The user confirmed quicker response and improving artwork; final 0.4.3 physical acceptance remains pending.** A Samsung TV package is `.wgt`, not an Android APK.
+**Status: 0.4.4 hardware-feedback candidate; see [patch validation and remaining TV acceptance](docs/TV-FEEDBACK-0.4.1.md). Signed 0.4.0, 0.4.1 and 0.4.2 packages were installed and launched on the identified S95H. The user confirmed quicker response and improving artwork; physical acceptance of 0.4.4 remains pending while the user is away.** A Samsung TV package is `.wgt`, not an Android APK.
 
 ## Start here: SDK already installed
 
@@ -66,3 +66,7 @@ Daily photograph is optional. Wikimedia receives the image/API requests; the app
 Preferences and local launch history stay on the TV. Backups contain your preferences and chosen weather location, but omit history and always restore with live preview off. Diagnostics are bounded/redacted; review an export before sharing it. Public repo publication requires a licence decision; this candidate does not grant a new software licence or redistribute other projects' code.
 
 See [comparison and readiness review](docs/review/READINESS.md), [test results](docs/TEST-RESULTS.md), [HDMI acceptance](docs/HDMI-ACCEPTANCE.md) and [local Codex handover](docs/LOCAL-CODEX-HANDOFF.md).
+
+## Artwork and hidden apps (0.4.4)
+
+Common favourite apps use locally bundled vector marks, with sources and terms in `src/assets/brands/`. Other apps keep native artwork and readable fallbacks. In All Apps, hold OK and choose Hide from All Apps. Choose Hidden apps in All Apps or Manage hidden apps in Launcher Settings to restore one or all listed apps. This preserves Home pins and never reveals filtered system services. Recently used fits its entries while the larger preview stays in place. Physical acceptance is pending while the user is away.

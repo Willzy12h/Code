@@ -95,6 +95,9 @@ with sync_playwright() as p:
         assert page.evaluate('window.__releaseURL')=='https://api.github.com/repos/Willzy12h/Code/releases/latest'
         assert 'No newer stable public release' in page.locator('#toast').inner_text()
     audit('setting-about',about)
+    def hidden(page):
+        click(page,'setting-manage-hidden');assert page.locator('#modal-title').inner_text()=='Hidden apps';assert 'No installed apps are hidden' in page.locator('#modal-text').inner_text();button(page,'Done')
+    audit('setting-manage-hidden',hidden)
     def export(page):
         with page.expect_download() as download:click(page,'setting-log-export')
         data=json.loads(open(download.value.path(),encoding='utf-8').read());assert data['hardwareVerified'] is False and data['video']['owner']=='none'
