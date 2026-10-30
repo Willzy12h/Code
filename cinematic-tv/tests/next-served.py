@@ -48,6 +48,13 @@ with server() as origin,sync_playwright() as p:
  page.locator('[data-action="settings"]').click();page.locator('.settings-category[data-group="appearance"]').click();page.locator('[data-action="setting-wallpaper"]').click()
  page.locator('[data-action="wallpaper-rotation"]').click();assert page.evaluate("JSON.parse(localStorage.getItem('cinematic-tv-v1')).wallpaperRotation") is False
  page.locator('[data-action="wallpaper-topic"][data-topic="abstract"]').click();assert 'abstract' not in page.evaluate("JSON.parse(localStorage.getItem('cinematic-tv-v1')).wallpaperTopics")
+ for source in ['scenic','twilight','dawn','dark','auto']:
+  page.locator('[data-action="wallpaper-source"]').click()
+  assert page.evaluate("JSON.parse(localStorage.getItem('cinematic-tv-v1')).wallpaper")==source
+ page.locator('[data-action="wallpaper-source"]').click()
+ page.get_by_role('button',name='Cancel',exact=True).click()
+ page.locator('[data-action="setting-dimming"]').click()
+ assert page.evaluate("JSON.parse(localStorage.getItem('cinematic-tv-v1')).wallpaper")=='auto','Cancelling an empty image link must preserve the previous source even after another setting is saved'
  # Real IndexedDB transactions: both limits, protected entries, aborted replacement.
  result=page.evaluate('''async()=>{
   const cache=LauncherWallpapers.browserCacheV2(indexedDB),raw=await (await fetch('assets/wallpapers/catalogue.json')).json(),item=raw.images[0],jpeg=await (await fetch('assets/wallpaper.jpg')).blob();
