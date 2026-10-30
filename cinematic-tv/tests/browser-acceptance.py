@@ -2,7 +2,7 @@
 from pathlib import Path
 from playwright.sync_api import sync_playwright
 import re,base64,json
-from ui_support import ROOT as root, chromium, prepare, render
+from ui_support import ROOT as root, chromium, prepare, render, click
 errors=[]
 with sync_playwright() as p:
     browser=chromium(p)
@@ -21,16 +21,18 @@ with sync_playwright() as p:
     page.keyboard.press('Enter')
     assert page.locator('#page-title').inner_text()=='Launcher Settings'
     before=page.locator('button[data-action="setting-glow"] .setting-value').inner_text()
-    page.locator('button[data-action="setting-glow"]').click()
+    click(page,'setting-glow')
     assert page.locator('.is-focused').get_attribute('data-action')=='setting-glow','Settings must restore focus on change'
     assert page.locator('button[data-action="setting-glow"] .setting-value').inner_text()!=before
-    page.locator('button[data-action="setting-wallpaper"]').click()
-    assert page.locator('button[data-action="setting-wallpaper"] .setting-value').inner_text()=='Daily photograph'
-    page.locator('button[data-action="setting-unit"]').click()
+    click(page,'setting-wallpaper')
+    assert page.locator('.settings-group:not([hidden]) h2').inner_text()=='Wallpapers'
+    assert page.locator('[data-action="wallpaper-rotation"]').is_visible()
+    click(page,'wallpaper-back')
+    click(page,'setting-unit')
     assert page.locator('button[data-action="setting-unit"] .setting-value').inner_text()=='°F'
     page.screenshot(path=str(root/'settings-v0.2.0.png'),full_page=True)
     # Explicit weather search and selection, without GPS.
-    page.locator('button[data-action="setting-city"]').click()
+    click(page,'setting-city')
     page.locator('.dialog-input').fill('Ealing')
     page.locator('#modal-actions button').filter(has_text='Save').click()
     page.wait_for_timeout(50)
@@ -40,13 +42,13 @@ with sync_playwright() as p:
     # Modify favourites; pin PC and keep it visible on Home.
     page.keyboard.press('Escape')
     page.locator('button[data-action="edit"]').first.click()
-    assert page.locator('#edit-grid .edit-action').count()==10
+    assert page.locator('#edit-grid .edit-action').count()==9
     page.locator('button[data-action="editinput"]').click()
     page.locator('#modal-actions button').filter(has_text='PC').click()
-    assert page.locator('#edit-grid .edit-action').count()==11
+    assert page.locator('#edit-grid .edit-action').count()==10
     page.keyboard.press('Escape')
     assert page.locator('#favourites .app-card').count()==9
-    assert page.locator('#favourites .app-card').last.get_attribute('data-itemid')=='input:HDMI:1'
+    assert page.locator('#favourites .app-card[data-itemid]').last.get_attribute('data-itemid')=='input:HDMI:1'
     page.screenshot(path=str(root/'home-pinned-pc.png'),full_page=True)
     # Edit home -> move pinned app left using remote, commit, and preserve order.
     page.locator('button[data-action="edit"]').first.click()
@@ -58,7 +60,7 @@ with sync_playwright() as p:
     page.keyboard.press('Enter')
     assert page.locator('#edit-grid button[data-itemid="input:HDMI:1"]').count()==1
     page.keyboard.press('Escape')
-    assert page.locator('#favourites .app-card').nth(7).get_attribute('data-itemid')=='input:HDMI:1'
+    assert page.locator('#favourites .app-card[data-itemid]').nth(6).get_attribute('data-itemid')=='input:HDMI:1'
     # All apps: search, hide an app, then explicitly show hidden and restore.
     page.locator('button[data-action="apps"]').first.click()
     assert page.locator('#apps-grid .app-card').count()==17
@@ -73,7 +75,7 @@ with sync_playwright() as p:
     assert page.locator('#apps-grid .app-card').count()==0
     page.keyboard.press('Escape')
     page.locator('button[data-action="settings"]').click()
-    page.locator('button[data-action="setting-hidden"]').click()
+    click(page,'setting-hidden')
     page.keyboard.press('Escape')
     page.locator('button[data-action="apps"]').first.click()
     assert page.locator('#apps-grid .app-card').count()==1

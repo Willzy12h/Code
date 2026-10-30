@@ -37,16 +37,20 @@ with sync_playwright() as p:
  def focus():
   page=fresh({'previewMode':'off'});tiles=page.locator('#favourites .app-card');tiles.first.focus();page.wait_for_timeout(170)
   page.keyboard.press('ArrowRight');page.keyboard.press('ArrowRight');page.keyboard.press('ArrowRight');page.wait_for_timeout(180)
-  frame=page.locator('#focus-frame').bounding_box();target=tiles.nth(3).locator('.logo').bounding_box()
-  assert abs(frame['x']-target['x'])<2 and abs(frame['width']-target['width'])<2
-  assert page.locator('#focus-frame').count()==1
+  art=tiles.nth(3).locator('.logo')
+  assert tiles.nth(3).evaluate('e=>e===document.activeElement')
+  assert art.evaluate('e=>getComputedStyle(e).borderTopColor')=='rgb(255, 255, 255)'
+  assert float(art.evaluate('e=>getComputedStyle(e).borderTopWidth')[:-2])>=3
+  assert page.locator('#focus-frame').is_hidden() and page.locator('.is-focused').count()==1
   page.close()
- case('Rapid focus moves retarget one selection frame without delaying navigation',focus)
+ case('Rapid focus moves immediately retarget one local white selection edge',focus)
  def settings():
   page=fresh({'previewMode':'off'});assert not page.locator('#page-title').is_visible();click(page,'settings')
-  for row in [page.locator('#settings-list .setting-row').last,page.locator('#settings-list .setting-row').first]:
-   row.focus();page.wait_for_timeout(100);r=row.bounding_box();outer=page.locator('#settings-list').bounding_box()
-   assert r['y']>=outer['y']+6 and r['y']+r['height']<=outer['y']+outer['height']-6
+  for group in ['home','appearance','inputs','weather','return','advanced']:
+   page.locator('.settings-category[data-group="'+group+'"]').click()
+   for row in [page.locator('.settings-group:not([hidden]) .setting-row').last,page.locator('.settings-group:not([hidden]) .setting-row').first]:
+    row.focus();page.wait_for_timeout(100);r=row.bounding_box();outer=page.locator('#settings-list').bounding_box()
+    assert r['y']>=outer['y']+6 and r['y']+r['height']<=outer['y']+outer['height']-6
   click(page,'setting-profiles');assert 'No presets saved' in page.locator('#modal-text').inner_text()
   page.get_by_role('button',name='Save current Home',exact=True).click();page.locator('.dialog-input').fill('Night');page.get_by_role('button',name='Save',exact=True).click()
   assert page.evaluate('JSON.parse(localStorage.getItem("cinematic-tv-v1")).profiles[0].name')=='Night'

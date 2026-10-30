@@ -82,7 +82,7 @@ with sync_playwright() as p:
         assert preview.locator('[id]').count()==0
         assert preview.locator('.navitem').count()==0
         before=preview.locator('.backdrop').get_attribute('style')
-        click(page,'setting-wallpaper');click(page,'setting-wallpaper');page.wait_for_timeout(750)
+        click(page,'setting-wallpaper');click(page,'wallpaper-source');click(page,'wallpaper-source');page.wait_for_timeout(750)
         assert preview.locator('.backdrop').get_attribute('style')!=before
         assert preview.locator('button:not([disabled])').count()==0
         assert not page.evaluate("window.__calls.includes('show')")
@@ -96,12 +96,12 @@ with sync_playwright() as p:
         render(page);page.wait_for_timeout(200)
         tile=page.locator('#favourites .app-card').nth(1);tile.focus();page.wait_for_timeout(260)
         image=tile.locator('img');logo=tile.locator('.logo')
-        assert image.bounding_box()['width']/logo.bounding_box()['width']>.98, 'Native artwork does not reach the rounded tile edge'
+        assert .86<image.bounding_box()['width']/logo.bounding_box()['width']<=1, 'Native artwork has excessive padding or escapes its tile'
         scale=logo.evaluate("e=>new DOMMatrix(getComputedStyle(e).transform).a")
         assert scale>=1.06, 'Focus does not clearly lift the selected tile'
         assert image.evaluate("e=>getComputedStyle(e).objectFit")=='contain'
         youtube=page.locator('#favourites .app-card').first
-        assert youtube.locator('svg').count()==1 and youtube.locator('img').count()==0, 'YouTube native artwork replaced the consistent mark'
+        assert youtube.locator('svg').count()==0 and youtube.locator('.name-fallback').inner_text()=='YouTube', 'Missing installed artwork must remain an honest readable name'
         pc=page.locator('#recent-list .recent-item').first
         assert pc.locator('.input-mark svg').count()==1, 'PC input still uses a text-box glyph'
         assert not page.evaluate('document.documentElement.scrollWidth>innerWidth'), 'Home overflows the viewport'
@@ -130,13 +130,13 @@ with sync_playwright() as p:
             return original(url);
           };
         }''')
-        render(page)
-        page.wait_for_function("document.querySelector('.backdrop').style.backgroundImage.includes('blob:')")
-        click(page,'settings');click(page,'setting-wallpaper-credits')
-        assert 'Photographer' in page.locator('#modal-text').inner_text()
-        assert 'CC BY-SA 4.0' in page.locator('#modal-text').inner_text()
+        render(page);page.wait_for_timeout(180)
+        assert page.evaluate('JSON.parse(localStorage.getItem("cinematic-tv-v1")).wallpaper')=='curated'
+        click(page,'settings');click(page,'setting-wallpaper')
+        assert page.locator('[data-action="wallpaper-source"] .setting-value').inner_text()=='Curated Wikimedia'
+        assert page.locator('[data-action="wallpaper-rotation"] .setting-value').inner_text()=='On'
         page.close()
-    case('Daily photo is decoded locally and shows photographer and licence attribution',daily_wallpaper)
+    case('Legacy daily preference migrates to the curated manager with rotation enabled',daily_wallpaper)
     browser.close()
 print(json.dumps(results,indent=2))
 assert all(x['result']=='PASS' for x in results),'S95H feedback regressions failed'

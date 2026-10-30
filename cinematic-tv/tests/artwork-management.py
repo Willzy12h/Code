@@ -11,17 +11,20 @@ with sync_playwright() as p:
  def fresh(settings=None):
   page=browser.new_page(viewport={'width':1920,'height':1080});prepare(page,settings,True);render(page);page.wait_for_timeout(100);return page
  def artwork():
-  page=fresh();cards=page.locator('#favourites .app-card')
-  for index in [0,1,2,3,4]:
-   assert cards.nth(index).locator('svg').count()==1, 'Common favourite lacks local vector artwork'
-   assert cards.nth(index).locator('img').count()==0
+  page=browser.new_page(viewport={'width':1920,'height':1080});prepare(page,{},True)
+  page.evaluate("()=>{window.__apps.forEach(a=>a.iconPath='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22200%22 height=%22100%22%3E%3Crect width=%22200%22 height=%22100%22 fill=%22red%22/%3E%3C/svg%3E')}")
+  render(page);page.wait_for_timeout(180);cards=page.locator('#favourites .app-card[data-itemid]')
+  for index in range(7):
+   card=cards.nth(index)
+   assert card.locator('img.native-icon').count()==1 and card.locator('svg').count()==0
+   assert card.locator('img').evaluate('e=>e.complete&&e.naturalWidth===200&&getComputedStyle(e).objectFit==="contain"')
   page.close()
- case('Known favourites use local vectors with no native padded icon',artwork)
+ case('All seven favourites use installed artwork with its original proportions',artwork)
  def native_fallback():
   page=browser.new_page(viewport={'width':1920,'height':1080});prepare(page,{'favouriteIds':['app:native.1']},True)
   page.evaluate("(url)=>{window.__apps[1].name='constructor';window.__apps[1].iconPath=url}", 'data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20width=%2220%22%20height=%2220%22%3E%3Crect%20width=%2220%22%20height=%2220%22%20fill=%22red%22/%3E%3C/svg%3E')
   render(page);page.wait_for_timeout(100)
-  card=page.locator('#favourites .app-card');assert card.locator('img.native-icon').count()==1 and card.locator('svg').count()==0
+  card=page.locator('#favourites .app-card[data-itemid]');assert card.locator('img.native-icon').count()==1 and card.locator('svg').count()==0
   page.close()
  case('Unknown app names including prototype keys retain native artwork fallback',native_fallback)
 
@@ -78,7 +81,7 @@ with sync_playwright() as p:
   assert page.locator('#recent-list .recent-item').count()==0
   assert page.locator('#recent-list .empty-placeholder').is_visible()
   assert page.locator('#home .recents-shell').bounding_box()['height']<page.locator('#home .spotlight').bounding_box()['height']*.4
-  assert page.get_by_role('button',name='Add favourite apps',exact=True).is_visible()
+  assert page.locator('#favourites [data-action="apps"]').is_visible()
   page.close()
  case('No history or connected sources has a compact readable empty state',empty_recents)
 

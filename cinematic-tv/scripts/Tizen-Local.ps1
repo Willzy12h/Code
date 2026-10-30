@@ -171,7 +171,18 @@ try {
             Write-Host "SHA-256: $($info.Sha256)"
             Write-Host "Author certificate SHA-256: $($info.AuthorCertificateSha256)"
             Write-Host 'Not installed yet. Use -Action Install with the TV IPv4 address after permitting installation in Device Manager.'
-        } finally { if (Test-Path -LiteralPath $temporary) { Remove-Item -LiteralPath $temporary -Recurse -Force } }
+        } finally {
+            if (Test-Path -LiteralPath $temporary) {
+                $cleanupDirectory = Get-Item -LiteralPath $temporary
+                $tempDirectory = Get-Item -LiteralPath ([IO.Path]::GetTempPath())
+                if ($cleanupDirectory.Parent.FullName -ne $tempDirectory.FullName -or
+                    $cleanupDirectory.Name -notmatch '^CinematicTV-[0-9a-f]{32}$' -or
+                    ($cleanupDirectory.Attributes -band [IO.FileAttributes]::ReparsePoint)) {
+                    throw 'Refusing cleanup outside the generated package-build directory.'
+                }
+                Remove-Item -LiteralPath $cleanupDirectory.FullName -Recurse -Force
+            }
+        }
         exit 0
     }
     if ($Action -eq 'Install') {

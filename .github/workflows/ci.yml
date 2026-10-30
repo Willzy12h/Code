@@ -42,6 +42,8 @@ jobs:
           SANDBOXED_CHROMIUM_CHANNEL: chrome
         run: cd "$PROJECT" && npm run verify
       - name: Real-origin resource and CSP smoke test
+        env:
+          SANDBOXED_CHROMIUM_CHANNEL: chrome
         run: cd "$PROJECT" && npm run test:served
       - name: Parse Windows signing helper
         shell: pwsh

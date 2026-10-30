@@ -40,7 +40,13 @@ def prepare(page,settings=None,native=False):
           package:{setPackageInfoEventListener:fn=>{window.__packages=fn;},unsetPackageInfoEventListener:()=>{}},
           tvwindow:{getSource:()=>window.__source,setSource:(s,ok)=>{window.__calls.push('source:'+s.number);window.__source=s;setTimeout(ok,5);},show:(ok,fail,rect)=>{window.__calls.push('show');setTimeout(()=>ok(rect),5)},hide:ok=>{window.__calls.push('hide');setTimeout(ok,5)}}};
         }''')
-def click(page,action):page.locator('button[data-action="'+action+'"]').first.click()
+def click(page,action):
+    target=page.locator('button[data-action="'+action+'"]').first
+    # Follow the same category route a user now takes; retain normal visibility checks.
+    if target.count() and not target.is_visible():
+        group=target.evaluate('e=>e.closest("[data-settings-group]")?.dataset.settingsGroup')
+        if group:page.locator('.settings-category[data-group="'+group+'"]').click()
+    target.click()
 
 def render(page):
     """Offline snapshot of unchanged source text; no HTTP browser access is allowed in the host."""

@@ -1,0 +1,388 @@
+{
+  "version": 1,
+  "images": [
+    {
+      "id": "scenery-4604eb39e2",
+      "title": "Carezza Lake.jpg",
+      "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/0/04/Carezza_Lake.jpg/3840px-Carezza_Lake.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+      "source": "https://commons.wikimedia.org/wiki/File:Carezza_Lake.jpg",
+      "width": 3840,
+      "height": 2560,
+      "mime": "image/jpeg",
+      "topics": [
+        "scenery"
+      ],
+      "author": "Olga1969",
+      "license": "CC BY 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0",
+      "bundled": "assets/wallpaper.jpg",
+      "bundledAdaptation": "Centre crop to 16:9, JPEG compression; original attribution and licence retained."
+    },
+    {
+      "id": "scenery-163c0bab5d",
+      "title": "Dülmen, Wildpark -- 2015 -- 8894-8.jpg",
+      "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/0/04/D%C3%BClmen%2C_Wildpark_--_2015_--_8894-8.jpg/3840px-D%C3%BClmen%2C_Wildpark_--_2015_--_8894-8.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+      "source": "https://commons.wikimedia.org/wiki/File:D%C3%BClmen,_Wildpark_--_2015_--_8894-8.jpg",
+      "width": 3840,
+      "height": 2565,
+      "mime": "image/jpeg",
+      "topics": [
+        "scenery"
+      ],
+      "author": "Dietmar Rabich",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0"
+    },
+    {
+      "id": "scenery-f6919ae92e",
+      "title": "Lake, meadow and forest - Angarnssjöängen, Stockholm - panoramio.jpg",
+      "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/c/c1/Lake%2C_meadow_and_forest_-_Angarnssj%C3%B6%C3%A4ngen%2C_Stockholm_-_panoramio.jpg/3840px-Lake%2C_meadow_and_forest_-_Angarnssj%C3%B6%C3%A4ngen%2C_Stockholm_-_panoramio.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+      "source": "https://commons.wikimedia.org/wiki/File:Lake,_meadow_and_forest_-_Angarnssj%C3%B6%C3%A4ngen,_Stockholm_-_panoramio.jpg",
+      "width": 3840,
+      "height": 2552,
+      "mime": "image/jpeg",
+      "topics": [
+        "scenery"
+      ],
+      "author": "Tommie Hansen",
+      "license": "CC BY 3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/3.0"
+    },
+    {
+      "id": "scenery-2190eea991",
+      "title": "Mt Moran Reflection, Jackson Lake, WY 2012 (19532773148).jpg",
+      "url": "https://upload.wikimedia.org/wikipedia/commons/d/d1/Mt_Moran_Reflection%2C_Jackson_Lake%2C_WY_2012_%2819532773148%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail_unscaled",
+      "source": "https://commons.wikimedia.org/wiki/File:Mt_Moran_Reflection,_Jackson_Lake,_WY_2012_(19532773148).jpg",
+      "width": 3840,
+      "height": 2321,
+      "mime": "image/jpeg",
+      "topics": [
+        "scenery"
+      ],
+      "author": "inkknife_2000 (7.5 million views +)",
+      "license": "CC BY-SA 2.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/2.0"
+    },
+    {
+      "id": "cities-47c85640f6",
+      "title": "1 singapore city skyline dusk panorama 2011.jpg",
+      "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/3/3e/1_singapore_city_skyline_dusk_panorama_2011.jpg/3840px-1_singapore_city_skyline_dusk_panorama_2011.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+      "source": "https://commons.wikimedia.org/wiki/File:1_singapore_city_skyline_dusk_panorama_2011.jpg",
+      "width": 3840,
+      "height": 2555,
+      "mime": "image/jpeg",
+      "topics": [
+        "cities",
+        "architecture",
+        "contemporary"
+      ],
+      "author": "chenisyuan",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "bundled": "assets/wallpaper-twilight.jpg",
+      "bundledAdaptation": "Centre crop to 16:9, JPEG compression; original attribution and licence retained."
+    },
+    {
+      "id": "cities-0baf2ddb22",
+      "title": "Cebu City skyline Quiot dusk (Cebu City; 01-17-2025).jpg",
+      "url": "https://upload.wikimedia.org/wikipedia/commons/c/cd/Cebu_City_skyline_Quiot_dusk_%28Cebu_City%3B_01-17-2025%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail_unscaled",
+      "source": "https://commons.wikimedia.org/wiki/File:Cebu_City_skyline_Quiot_dusk_(Cebu_City;_01-17-2025).jpg",
+      "width": 3840,
+      "height": 2880,
+      "mime": "image/jpeg",
+      "topics": [
+        "cities"
+      ],
+      "author": "Patrickroque01",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0"
+    },
+    {
+      "id": "cities-95cc938cc5",
+      "title": "Chicago Skyline at Dusk.jpg",
+      "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/d/d2/Chicago_Skyline_at_Dusk.jpg/3840px-Chicago_Skyline_at_Dusk.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+      "source": "https://commons.wikimedia.org/wiki/File:Chicago_Skyline_at_Dusk.jpg",
+      "width": 3840,
+      "height": 2560,
+      "mime": "image/jpeg",
+      "topics": [
+        "cities"
+      ],
+      "author": "Matthew T Rader",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0"
+    },
+    {
+      "id": "cities-b9b7ab899d",
+      "title": "City skyline at dusk - geograph.org.uk - 3335828.jpg",
+      "url": "https://upload.wikimedia.org/wikipedia/commons/2/21/City_skyline_at_dusk_-_geograph.org.uk_-_3335828.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail_unscaled",
+      "source": "https://commons.wikimedia.org/wiki/File:City_skyline_at_dusk_-_geograph.org.uk_-_3335828.jpg",
+      "width": 3840,
+      "height": 2880,
+      "mime": "image/jpeg",
+      "topics": [
+        "cities"
+      ],
+      "author": "Robin Sones",
+      "license": "CC BY-SA 2.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/2.0"
+    },
+    {
+      "id": "cities-88a05d5574",
+      "title": "Davao Poblacion-Matina skyline Shrine Hills dusk (Davao City; 04-19-2024).jpg",
+      "url": "https://upload.wikimedia.org/wikipedia/commons/8/8c/Davao_Poblacion-Matina_skyline_Shrine_Hills_dusk_%28Davao_City%3B_04-19-2024%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail_unscaled",
+      "source": "https://commons.wikimedia.org/wiki/File:Davao_Poblacion-Matina_skyline_Shrine_Hills_dusk_(Davao_City;_04-19-2024).jpg",
+      "width": 3840,
+      "height": 2880,
+      "mime": "image/jpeg",
+      "topics": [
+        "cities"
+      ],
+      "author": "Patrickroque01",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0"
+    },
+    {
+      "id": "cities-0cccfbd256",
+      "title": "Mumbai, India, Bombay, Mumbai city skyline at night.jpg",
+      "url": "https://upload.wikimedia.org/wikipedia/commons/a/a9/Mumbai%2C_India%2C_Bombay%2C_Mumbai_city_skyline_at_night.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail_unscaled",
+      "source": "https://commons.wikimedia.org/wiki/File:Mumbai,_India,_Bombay,_Mumbai_city_skyline_at_night.jpg",
+      "width": 3840,
+      "height": 2560,
+      "mime": "image/jpeg",
+      "topics": [
+        "cities"
+      ],
+      "author": "Vyacheslav Argenberg",
+      "license": "CC BY 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0"
+    },
+    {
+      "id": "cities-487af8a762",
+      "title": "New-York-City-skyline-dusk-September-2014.jpg",
+      "url": "https://upload.wikimedia.org/wikipedia/commons/7/75/New-York-City-skyline-dusk-September-2014.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail_unscaled",
+      "source": "https://commons.wikimedia.org/wiki/File:New-York-City-skyline-dusk-September-2014.jpg",
+      "width": 3840,
+      "height": 2880,
+      "mime": "image/jpeg",
+      "topics": [
+        "cities"
+      ],
+      "author": "Acediscovery",
+      "license": "CC BY 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0"
+    },
+    {
+      "id": "cities-87425c401f",
+      "title": "New York City skyline with Statue of Liberty at dusk aerial 2018.jpg",
+      "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/9/9d/New_York_City_skyline_with_Statue_of_Liberty_at_dusk_aerial_2018.jpg/3840px-New_York_City_skyline_with_Statue_of_Liberty_at_dusk_aerial_2018.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+      "source": "https://commons.wikimedia.org/wiki/File:New_York_City_skyline_with_Statue_of_Liberty_at_dusk_aerial_2018.jpg",
+      "width": 3840,
+      "height": 2561,
+      "mime": "image/jpeg",
+      "topics": [
+        "cities"
+      ],
+      "author": "SebastianBlumeArt",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0"
+    },
+    {
+      "id": "architecture-716225f668",
+      "title": "Istanbul Museum of Modern Art Exterior in 2024 5619.jpg",
+      "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/8/8c/Istanbul_Museum_of_Modern_Art_Exterior_in_2024_5619.jpg/3840px-Istanbul_Museum_of_Modern_Art_Exterior_in_2024_5619.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+      "source": "https://commons.wikimedia.org/wiki/File:Istanbul_Museum_of_Modern_Art_Exterior_in_2024_5619.jpg",
+      "width": 3840,
+      "height": 2560,
+      "mime": "image/jpeg",
+      "topics": [
+        "architecture"
+      ],
+      "author": "Dosseman",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0"
+    },
+    {
+      "id": "architecture-472d650eed",
+      "title": "Istanbul Museum of Modern Art Exterior in 2024 5622.jpg",
+      "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/f/f8/Istanbul_Museum_of_Modern_Art_Exterior_in_2024_5622.jpg/3840px-Istanbul_Museum_of_Modern_Art_Exterior_in_2024_5622.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+      "source": "https://commons.wikimedia.org/wiki/File:Istanbul_Museum_of_Modern_Art_Exterior_in_2024_5622.jpg",
+      "width": 3840,
+      "height": 2560,
+      "mime": "image/jpeg",
+      "topics": [
+        "architecture"
+      ],
+      "author": "Dosseman",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0"
+    },
+    {
+      "id": "architecture-583a58459d",
+      "title": "Istanbul Museum of Modern Art Exterior in 2024 5624.jpg",
+      "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/d/da/Istanbul_Museum_of_Modern_Art_Exterior_in_2024_5624.jpg/3840px-Istanbul_Museum_of_Modern_Art_Exterior_in_2024_5624.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+      "source": "https://commons.wikimedia.org/wiki/File:Istanbul_Museum_of_Modern_Art_Exterior_in_2024_5624.jpg",
+      "width": 3840,
+      "height": 2560,
+      "mime": "image/jpeg",
+      "topics": [
+        "architecture"
+      ],
+      "author": "Dosseman",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0"
+    },
+    {
+      "id": "architecture-d598feb64f",
+      "title": "Istanbul Museum of Modern Art Exterior in 2024 5626.jpg",
+      "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/9/97/Istanbul_Museum_of_Modern_Art_Exterior_in_2024_5626.jpg/3840px-Istanbul_Museum_of_Modern_Art_Exterior_in_2024_5626.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+      "source": "https://commons.wikimedia.org/wiki/File:Istanbul_Museum_of_Modern_Art_Exterior_in_2024_5626.jpg",
+      "width": 3840,
+      "height": 2560,
+      "mime": "image/jpeg",
+      "topics": [
+        "architecture"
+      ],
+      "author": "Dosseman",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0"
+    },
+    {
+      "id": "abstract-ec09c4bb1e",
+      "title": "Grande Arche, France - April 2011.jpg",
+      "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/1/1f/Grande_Arche%2C_France_-_April_2011.jpg/3840px-Grande_Arche%2C_France_-_April_2011.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+      "source": "https://commons.wikimedia.org/wiki/File:Grande_Arche,_France_-_April_2011.jpg",
+      "width": 3840,
+      "height": 2568,
+      "mime": "image/jpeg",
+      "topics": [
+        "abstract"
+      ],
+      "author": "Cristian Bortes  from Cluj-Napoca, Romania",
+      "license": "CC BY 2.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/2.0"
+    },
+    {
+      "id": "contemporary-760bc8d993",
+      "title": "Hallway, Paul Schweiker House and Studio, Meacham Road, Schaumburg, IL - 54210522773.jpg",
+      "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/7/73/Hallway%2C_Paul_Schweiker_House_and_Studio%2C_Meacham_Road%2C_Schaumburg%2C_IL_-_54210522773.jpg/3840px-Hallway%2C_Paul_Schweiker_House_and_Studio%2C_Meacham_Road%2C_Schaumburg%2C_IL_-_54210522773.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+      "source": "https://commons.wikimedia.org/wiki/File:Hallway,_Paul_Schweiker_House_and_Studio,_Meacham_Road,_Schaumburg,_IL_-_54210522773.jpg",
+      "width": 3840,
+      "height": 2880,
+      "mime": "image/jpeg",
+      "topics": [
+        "contemporary"
+      ],
+      "author": "w_lemay",
+      "license": "CC BY-SA 2.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/2.0"
+    },
+    {
+      "id": "contemporary-d7488d9021",
+      "title": "Living Room, Paul Schweiker House and Studio, Meacham Road, Schaumburg, IL - 54210548534.jpg",
+      "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/f/fc/Living_Room%2C_Paul_Schweiker_House_and_Studio%2C_Meacham_Road%2C_Schaumburg%2C_IL_-_54210548534.jpg/3840px-Living_Room%2C_Paul_Schweiker_House_and_Studio%2C_Meacham_Road%2C_Schaumburg%2C_IL_-_54210548534.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+      "source": "https://commons.wikimedia.org/wiki/File:Living_Room,_Paul_Schweiker_House_and_Studio,_Meacham_Road,_Schaumburg,_IL_-_54210548534.jpg",
+      "width": 3840,
+      "height": 2880,
+      "mime": "image/jpeg",
+      "topics": [
+        "contemporary"
+      ],
+      "author": "w_lemay",
+      "license": "CC BY-SA 2.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/2.0"
+    },
+    {
+      "id": "contemporary-660ef8f6c5",
+      "title": "Paul Schweiker House and Studio, Meacham Road, Schaumburg, IL - 54210463488.jpg",
+      "url": "https://upload.wikimedia.org/wikipedia/commons/5/5a/Paul_Schweiker_House_and_Studio%2C_Meacham_Road%2C_Schaumburg%2C_IL_-_54210463488.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail_unscaled",
+      "source": "https://commons.wikimedia.org/wiki/File:Paul_Schweiker_House_and_Studio,_Meacham_Road,_Schaumburg,_IL_-_54210463488.jpg",
+      "width": 3840,
+      "height": 2880,
+      "mime": "image/jpeg",
+      "topics": [
+        "contemporary"
+      ],
+      "author": "w_lemay",
+      "license": "CC BY-SA 2.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/2.0"
+    },
+    {
+      "id": "scenery-1d6a69e789",
+      "title": "Bear Foraging in the Morning - Flickr - Eric Kilby.jpg",
+      "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/5/5e/Bear_Foraging_in_the_Morning_-_Flickr_-_Eric_Kilby.jpg/3840px-Bear_Foraging_in_the_Morning_-_Flickr_-_Eric_Kilby.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+      "source": "https://commons.wikimedia.org/wiki/File:Bear_Foraging_in_the_Morning_-_Flickr_-_Eric_Kilby.jpg",
+      "width": 3840,
+      "height": 2560,
+      "mime": "image/jpeg",
+      "topics": [
+        "scenery"
+      ],
+      "author": "Eric Kilby  from Somerville, MA, USA",
+      "license": "CC BY-SA 2.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/2.0"
+    },
+    {
+      "id": "scenery-68e6141bcd",
+      "title": "Blushing Peaks, View from Grand Lake Lodge, CO 8-12 (7895530590).jpg",
+      "url": "https://upload.wikimedia.org/wikipedia/commons/a/a2/Blushing_Peaks%2C_View_from_Grand_Lake_Lodge%2C_CO_8-12_%287895530590%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail_unscaled",
+      "source": "https://commons.wikimedia.org/wiki/File:Blushing_Peaks,_View_from_Grand_Lake_Lodge,_CO_8-12_(7895530590).jpg",
+      "width": 3840,
+      "height": 3533,
+      "mime": "image/jpeg",
+      "topics": [
+        "scenery"
+      ],
+      "author": "inkknife_2000 (7.5 million views +)",
+      "license": "CC BY-SA 2.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/2.0"
+    },
+    {
+      "id": "scenery-816cd41bc7",
+      "title": "Rocky Mount N.P., Sunrise 8-30-12 (8141886591).jpg",
+      "url": "https://upload.wikimedia.org/wikipedia/commons/3/37/Rocky_Mount_N.P.%2C_Sunrise_8-30-12_%288141886591%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail_unscaled",
+      "source": "https://commons.wikimedia.org/wiki/File:Rocky_Mount_N.P.,_Sunrise_8-30-12_(8141886591).jpg",
+      "width": 3840,
+      "height": 2661,
+      "mime": "image/jpeg",
+      "topics": [
+        "scenery"
+      ],
+      "author": "inkknife_2000 (7.5 million views +)",
+      "license": "CC BY-SA 2.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/2.0"
+    },
+    {
+      "id": "scenery-0cfce863e2",
+      "title": "Shadow Mountain Lake Sunrise, CO 8-29-12v (8113262455).jpg",
+      "url": "https://upload.wikimedia.org/wikipedia/commons/e/ed/Shadow_Mountain_Lake_Sunrise%2C_CO_8-29-12v_%288113262455%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail_unscaled",
+      "source": "https://commons.wikimedia.org/wiki/File:Shadow_Mountain_Lake_Sunrise,_CO_8-29-12v_(8113262455).jpg",
+      "width": 3840,
+      "height": 3423,
+      "mime": "image/jpeg",
+      "topics": [
+        "scenery"
+      ],
+      "author": "inkknife_2000 (7.5 million views +)",
+      "license": "CC BY-SA 2.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/2.0"
+    },
+    {
+      "id": "abstract-df2b3b857f",
+      "title": "Cala des Camps fossil dunes 05.jpg",
+      "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/3/3e/Cala_des_Camps_fossil_dunes_05.jpg/3840px-Cala_des_Camps_fossil_dunes_05.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+      "source": "https://commons.wikimedia.org/wiki/File:Cala_des_Camps_fossil_dunes_05.jpg",
+      "width": 3840,
+      "height": 2560,
+      "mime": "image/jpeg",
+      "topics": [
+        "abstract"
+      ],
+      "author": "Graeme Churchard",
+      "license": "CC BY 2.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/2.0",
+      "bundled": "assets/wallpaper-dawn.jpg",
+      "bundledAdaptation": "Centre crop to 16:9, JPEG compression; original attribution and licence retained."
+    }
+  ]
+}

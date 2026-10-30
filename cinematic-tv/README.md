@@ -1,10 +1,10 @@
-> Optional experimental background return is available in 0.4.7, default Off. See [controls, limitations and physical trial](docs/TV-FEEDBACK-0.4.7.md). No internal Home configuration is changed.
+> Optional experimental background return remains available, default Off. See [controls, limitations and physical trial](docs/TV-FEEDBACK-0.4.7.md). No internal Home configuration is changed.
 
-# Cinematic TV 0.4.5
+# Cinematic TV 0.5.0
 
 A personal, remote-first Samsung Tizen TV launcher. The agreed Cinematic Spotlight layout is retained: recent apps/inputs on the left, an adaptive preview beside them, favourites below, and open scenic wallpaper. No recommendation feed, adverts, telemetry, accounts or custom screensaver.
 
-**Status: 0.4.5 hardware-feedback candidate; see [patch validation and remaining TV acceptance](docs/TV-FEEDBACK-0.4.1.md). Signed 0.4.0, 0.4.1 and 0.4.2 packages were installed and launched on the identified S95H. The user confirmed quicker response and improving artwork; physical acceptance of 0.4.4 remains pending while the user is away.** A Samsung TV package is `.wgt`, not an Android APK.
+**Status: 0.5.0 local installation candidate. See [features, validation scope and recovery](docs/TV-FEEDBACK-0.5.0.md). Physical S95H acceptance is recorded separately from browser/native-mock checks.** A Samsung TV package is `.wgt`, not an Android APK.
 
 ## Start here: SDK already installed
 

@@ -20,7 +20,7 @@
     version:1, favouriteIds:null, recent:[], view:'home',layout:'cinematic',recentCount:4,
     showWeather:true,showClock:true,hdmiPreview:false,previewMode:'selected',reducedMotion:false,glow:'blue',
     city:'London',latitude:51.5074,longitude:-0.1278,tempUnit:'celsius',
-    inputNames:{},pcPort:'',hideDisconnected:true,favouriteOrderNames:PRIMARY.slice(),wallpaper:'scenic',
+    inputNames:{},pcPort:'',hideDisconnected:true,favouriteOrderNames:PRIMARY.slice(),wallpaper:'scenic',wallpaperTopics:['scenery','cities','architecture','abstract','contemporary'],wallpaperRotation:true,
     customWallpaperUrl:'', focusDefault:'pc',hiddenAppIds:[],showHidden:false,
     longPressMs:190, previewBrand:'subtle', setupDone:false, showNetwork:false, quickSwitch:true,
     uiRevision:0,autoDimming:true,profiles:[], inputIcons:{}, adaptiveWeather:false, reducedEffects:false, autoPreviewCurrentOnly:true
@@ -66,9 +66,10 @@
     d.recentCount=Math.round(between(d.recentCount,2,6,4));
     d.longPressMs=between(d.longPressMs,170,450,190);
     if(['cinematic','balanced','compact'].indexOf(d.layout)<0)d.layout='cinematic';
-    if(['scenic','twilight','dawn','dark','custom','auto','daily'].indexOf(d.wallpaper)<0)d.wallpaper='scenic';
+    if(['scenic','twilight','dawn','dark','custom','auto','daily','curated'].indexOf(d.wallpaper)<0)d.wallpaper='scenic';
     if(['blue','white'].indexOf(d.glow)<0)d.glow='blue';
     if(['recent','pc','favourite'].indexOf(d.focusDefault)<0)d.focusDefault='pc';
+    d.wallpaperTopics=Array.isArray(d.wallpaperTopics)?unique(d.wallpaperTopics.filter(function(t){return ['scenery','cities','architecture','abstract','contemporary'].indexOf(t)>=0;})):['scenery'];if(!d.wallpaperTopics.length)d.wallpaperTopics=['scenery'];d.wallpaperRotation=d.wallpaperRotation!==false;
     d.customWallpaperUrl=safeUrl(d.customWallpaperUrl);
     if(d.wallpaper==='custom'&&!d.customWallpaperUrl)d.wallpaper='scenic';
     d.city=safeText(d.city,65)||'London';
@@ -85,7 +86,7 @@
     d.autoPreviewCurrentOnly=d.autoPreviewCurrentOnly!==false;
     d.profiles=Array.isArray(d.profiles)?d.profiles.slice(0,8).filter(function(x){return x && typeof x.name==='string';}).map(function(x){
       return {name:safeText(x.name,32).trim()||'Home', favouriteIds:validIds(x.favouriteIds), layout:['cinematic','balanced','compact'].indexOf(x.layout)>=0?x.layout:'cinematic',
-        recentCount:Math.round(between(x.recentCount,2,6,4)),wallpaper:['scenic','dawn','twilight','dark','auto','daily'].indexOf(x.wallpaper)>=0?x.wallpaper:'scenic',
+        recentCount:Math.round(between(x.recentCount,2,6,4)),wallpaper:['scenic','dawn','twilight','dark','auto','daily','curated'].indexOf(x.wallpaper)>=0?x.wallpaper:'scenic',wallpaperTopics:['scenery','cities','architecture','abstract','contemporary'],wallpaperRotation:true,
         autoDimming:x.autoDimming!==false,glow:x.glow==='white'?'white':'blue',reducedMotion:x.reducedMotion===true};
     }):[];
     return d;
@@ -129,6 +130,7 @@
     });
     return unique((ids||[]).map(function(id){return mapping[id]||id;}));
   }
+  function streamingPreset(list){return PRIMARY.slice(0,7).map(function(name){return list.find(function(x){return x.name===name;});}).filter(Boolean).map(function(x){return x.id;});}
   function initialFavourites(list,names){var out=[];(names||PRIMARY).forEach(function(n){var a=list.find(function(x){return x.name.toLowerCase()===n.toLowerCase();});if(a&&out.indexOf(a.id)<0)out.push(a.id);});return out.length?out:list.slice(0,8).map(function(x){return x.id;});}
   function orderedFavourites(ids,all){return(ids||[]).map(function(id){return all.find(function(x){return x.id===id;});}).filter(Boolean);}
   function recordRecent(recent,entry,time){if(!entry||!entry.id)return recent||[];var x={id:entry.id,name:safeText(entry.name),at:Number(time)||Date.now()};return[x].concat((recent||[]).filter(function(e){return e&&e.id!==x.id;})).slice(0,30);}
@@ -146,5 +148,5 @@
     if(available)return available.id;
     return favourites&&favourites.length?favourites[0].id:null;
   }
-  return{remapCatalogueIds:remapCatalogueIds,PRIMARY:PRIMARY,defaults:defaults,load:load,nameOf:nameOf,unique:unique,catalogue:catalogue,initialFavourites:initialFavourites,orderedFavourites:orderedFavourites,recordRecent:recordRecent,moveItem:moveItem,sources:sources,safeText:safeText,safeUrl:safeUrl,detectCategory:detectCategory,defaultSelection:defaultSelection};
+  return{streamingPreset:streamingPreset,remapCatalogueIds:remapCatalogueIds,PRIMARY:PRIMARY,defaults:defaults,load:load,nameOf:nameOf,unique:unique,catalogue:catalogue,initialFavourites:initialFavourites,orderedFavourites:orderedFavourites,recordRecent:recordRecent,moveItem:moveItem,sources:sources,safeText:safeText,safeUrl:safeUrl,detectCategory:detectCategory,defaultSelection:defaultSelection};
 }));

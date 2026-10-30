@@ -66,7 +66,7 @@ with server() as url, sync_playwright() as p:
         assert page.evaluate('window.__calls.includes("show")');page.close()
     case('Quick Switch opens previous available source',quick_switch)
     def focus_refresh():
-        page=fresh(native=True);click(page,'settings');page.locator('[data-action="setting-glow"]').focus()
+        page=fresh(native=True);click(page,'settings');page.locator('.settings-category[data-group="appearance"]').click();page.locator('[data-action="setting-glow"]').focus()
         page.evaluate('window.__inputCallback({})');page.wait_for_timeout(300)
         assert page.locator('.is-focused').get_attribute('data-action')=='setting-glow'
         click(page,'setting-city');page.locator('.dialog-input').fill('Ealing')
