@@ -4,7 +4,7 @@ from http.server import ThreadingHTTPServer, SimpleHTTPRequestHandler
 from functools import partial
 from contextlib import contextmanager
 from threading import Thread
-import json, os, shutil, re, base64
+import json, os, shutil, re
 ROOT=Path(__file__).resolve().parents[1]
 @contextmanager
 def server():
@@ -49,18 +49,23 @@ def click(page,action):
     target.click()
 
 def render(page):
-    """Offline snapshot of unchanged source text; no HTTP browser access is allowed in the host."""
+    """Mock behaviour snapshot; image bytes are fulfilled locally, never downloaded.
+
+    Keep 4K images out of inline source so fixture construction does not dominate
+    the unchanged interaction deadline. Exact-origin/CSP tests remain separate.
+    """
     html=(ROOT/'src/index.html').read_text(encoding='utf-8')
     css=(ROOT/'src/css/styles.css').read_text(encoding='utf-8')
-    for n in ['wallpaper.jpg','wallpaper-dawn.jpg','wallpaper-twilight.jpg']:
-        data='data:image/jpeg;base64,'+base64.b64encode((ROOT/'src/assets'/n).read_bytes()).decode()
-        css=css.replace("../assets/"+n,data)
+    images={name:(ROOT/'src/assets'/name).read_bytes() for name in ['wallpaper.jpg','wallpaper-dawn.jpg','wallpaper-twilight.jpg']}
+    def image_fixture(route,request):
+        name=request.url.rsplit('/',1)[-1]
+        if name in images:route.fulfill(status=200,content_type='image/jpeg',body=images[name])
+        else:route.abort()
+    page.route('https://cinematic-fixture.invalid/assets/**',image_fixture)
+    html=html.replace('<head>','<head><base href="https://cinematic-fixture.invalid/">',1)
     html=re.sub(r'<link[^>]*stylesheet[^>]*>','<style>'+css+'</style>',html)
     for name in re.findall(r'<script src="(js/[^"]+)"',html):
         code=(ROOT/'src'/name).read_text(encoding='utf-8')
-        for image in ['wallpaper.jpg','wallpaper-dawn.jpg','wallpaper-twilight.jpg']:
-            uri='data:image/jpeg;base64,'+base64.b64encode((ROOT/'src/assets'/image).read_bytes()).decode()
-            code=code.replace("'assets/"+image+"'","'"+uri+"'")
         html=html.replace('<script src="'+name+'"></script>','<script>'+code+'</script>')
     html=re.sub(r'<meta http-equiv="Content-Security-Policy"[^>]*>', '', html)
     page.set_content(html,wait_until='domcontentloaded')

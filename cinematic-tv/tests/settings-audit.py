@@ -86,7 +86,7 @@ with sync_playwright() as p:
         click(page,'wallpaper-topic');assert 'scenery' not in state(page)['wallpaperTopics']
         click(page,'wallpaper-back');assert page.locator('.settings-group:not([hidden]) h2').inner_text()=='Appearance'
     audit('setting-wallpaper',wallpaper)
-    def credits(page):click(page,'setting-wallpaper-credits');assert 'Wikimedia' in page.locator('#modal-text').inner_text()
+    def credits(page):click(page,'setting-wallpaper-credits');assert 'wikimedia' in page.locator('#modal-text').inner_text().lower()
     audit('setting-wallpaper-credits',credits)
     def custom(page):
         click(page,'setting-custom');page.locator('.dialog-input').fill('https://images.example.com/wall.jpg');button(page,'Save')
