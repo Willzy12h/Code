@@ -5,7 +5,7 @@ import json,hashlib,re
 root=Path(__file__).resolve().parents[1]
 ns={'w':'http://www.w3.org/ns/widgets','t':'http://tizen.org/ns/widgets'}
 config=ET.parse(root/'src/config.xml').getroot();meta=json.loads((root/'package.json').read_text(encoding='utf-8'))
-assert config.attrib['version']==meta['version']=='0.5.2'
+assert config.attrib['version']==meta['version']=='0.5.3'
 app=config.find('t:application',ns);assert app.attrib['id']=='CinemTV001.Launcher' and app.attrib['package']=='CinemTV001'
 assert config.find('t:profile',ns).attrib['name']=='tv-samsung'
 assert config.find('t:content-security-policy',ns) is not None

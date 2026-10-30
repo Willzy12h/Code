@@ -8,8 +8,9 @@ with sync_playwright() as p:
   page=b.new_page(viewport={'width':width,'height':height});prepare(page,{},True);page.evaluate("__apps.push({id:'native.sounds',name:'BBC Sounds',show:true})");render(page);page.wait_for_timeout(400)
   card=page.locator('#favourites .app-card').first;card.focus();page.wait_for_timeout(130)
   duration=float(card.locator('.logo').evaluate('e=>getComputedStyle(e).transitionDuration').removesuffix('s'))
-  assert duration<=.055, f'Favourites transition still {duration}s'
-  transform=card.locator('.logo').evaluate('e=>new DOMMatrix(getComputedStyle(e).transform).a');assert 1<transform<=1.025
+  assert duration==0, f'Favourites transition still {duration}s'
+  assert card.locator('.logo').evaluate('e=>getComputedStyle(e).transform')=='none','Whole-tile movement caused measured TV frame stalls'
+  assert card.locator('.logo').evaluate('e=>getComputedStyle(e).willChange')=='auto'
   row=page.locator('#favourites');cards=row.locator('.app-card')
   assert row.evaluate('e=>e.scrollWidth<=e.clientWidth+1')
   first=cards.first.bounding_box();second=cards.nth(1).bounding_box()
@@ -43,4 +44,4 @@ with sync_playwright() as p:
    assert row.evaluate('e=>e.scrollLeft>0'),'Long customised rows must retain scroll access'
   page.close()
  b.close()
-print(json.dumps({'result':'PASS','scope':'1080p/4K exact publisher image loads, proportions, rapid retargeting, bounded Quick Lift; native calls mocked'}))
+print(json.dumps({'result':'PASS','scope':'1080p/4K exact publisher image loads, proportions, rapid retargeting, immediate static focus; native calls mocked'}))

@@ -147,15 +147,14 @@ body[data-page="inputs"] #home{pointer-events:none;opacity:.45}body[data-page="i
 #input-grid{grid-template-columns:1fr;gap:.6vh;overflow-y:auto;padding:.6vw;scroll-padding:1vh}.input-card{height:8vh;flex-direction:row;align-items:center;gap:1vw;padding:.7vw}.input-card>div{flex:1;display:grid;grid-template-columns:1fr auto;gap:.2vh 1vw}.input-card .input-icon{font-size:2.8vh}.input-name{font-size:2vh}.input-port,.connected,.disconnected{font-size:1.3vh}
 .name-fallback{font-family:inherit!important;font-size:1.7vh!important;font-weight:500!important;line-height:1.3!important}
 
-/* S95H feedback: a small, sharp lift; a constant shadow avoids repainting a halo per key. */
-.favourites-row .app-card .logo{transition:transform 50ms cubic-bezier(.16,1,.3,1);box-shadow:0 8px 18px #0004}
-.favourites-row .app-card.is-focused .logo{transform:translateY(-.1vh) scale(1.02);box-shadow:0 8px 18px #0004}
+/* S95H profiling: keep the selection edge immediate without moving image textures. */
+.favourites-row .app-card .logo{transition:none;box-shadow:0 8px 18px #0004}
+.favourites-row .app-card.is-focused .logo{transform:none;box-shadow:0 8px 18px #0004}
 .logo img.publisher-icon{inset:0;width:100%;height:100%;object-fit:contain;border-radius:inherit}
 
 .reduced-motion .favourites-row .app-card .logo{transition:none;transform:none!important}
 
-/* Keep travel short and labels stable. Promotion is bounded to at most ten Home tiles. */
+/* Closer spacing and stable labels; no extra image layers per favourite. */
 .favourites-row{gap:.4vw}
 .favourites-row .app-card{flex-basis:8.6vw}
-.favourites-row[data-fitted="true"] .logo{will-change:transform}
 .favourites-row .app-card .name,.favourites-row .app-card.is-focused .name{font-weight:600}
