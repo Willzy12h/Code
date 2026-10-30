@@ -1,7 +1,7 @@
 /* Cinematic TV v0.4 — remote-first Samsung TV launcher. */
 (function(w,doc){
   'use strict';
-  var M=w.LauncherModel,P=w.LauncherPlatform,F=w.LauncherFeatures,U=w.LauncherPresentation,VERSION='0.5.1';
+  var M=w.LauncherModel,P=w.LauncherPlatform,F=w.LauncherFeatures,U=w.LauncherPresentation,VERSION='0.5.2';
   var STORAGE='cinematic-tv-v1', APP_CACHE='cinematic-tv-apps-v2', WEATHER_CACHE='cinematic-tv-weather-v1';
   function storageGet(key){try{return localStorage.getItem(key);}catch(e){return null;}}
   var state=M.load(storageGet(STORAGE)),page='home',filter='All',searchTerm='',selected=null,modalOpen=false,modalReturn=null;
@@ -243,7 +243,8 @@
     b.onclick=function(){if(page==='edit')editActions(item);else if(page==='apps'&&editingFromApps){toggleFavourite(item);refreshView('apps',b.dataset.itemid);return;}else activate(item);};return b;}
   function fillFavourites(){var area=q('#favourites');area.textContent='';favouriteItems().forEach(function(item){area.appendChild(appCard(item,'favourites'));});
     var library=button('apps','app-card library-card');library.dataset.zone='favourites';library.appendChild(el('div','logo library-logo','All apps'));library.appendChild(el('span','name','All apps'));area.appendChild(library);
-    q('#favourites-count').textContent=(state.favouriteIds||[]).length>8?'Use ← → for more':'';
+    area.dataset.fitted=area.children.length<=10?'true':'false';
+    q('#favourites-count').textContent=area.dataset.fitted==='false'?'Use ← → for more':'';
     if(!area.children.length){var b=button('apps','pill');b.textContent='Add favourite apps';area.appendChild(b);}}
   function fillApps(){var area=q('#apps-grid');area.textContent='';q('[data-action="manage-hidden"]').textContent='Hidden apps ('+catalog.filter(function(a){return state.hiddenAppIds.indexOf(a.id)>=0;}).length+')';var query=searchTerm.toLowerCase();catalog.filter(function(item){return(state.showHidden||state.hiddenAppIds.indexOf(item.id)<0)&&(filter==='All'||M.detectCategory(item.name)===filter)&&(!query||item.name.toLowerCase().indexOf(query)>=0);}).forEach(function(item){var card=appCard(item,'apps');if(state.favouriteIds&&(state.favouriteIds||[]).indexOf(item.id)>=0)card.title='Pinned to Home';area.appendChild(card);});
     qa('.filter[data-filter]').forEach(function(b){b.classList.toggle('active',b.dataset.filter===filter);});q('#search-status').textContent=searchTerm?'Search: '+searchTerm:'';
@@ -413,7 +414,12 @@
     return inputList.find(function(x){return x.connected&&x.raw&&current&&current.type==='HDMI'&&x.raw.type===current.type&&Number(x.raw.number)===Number(current.number);})||item;
   }
   function preview(item){if(!item||page!=='home'||fullscreenInput||modalOpen||launching)return;
-    item=previewTarget(item);previewItem=item;var hit=q('#preview-hit');hit.disabled=item.kind!=='input';hit.setAttribute('aria-label',item.kind==='input'?'Open '+itemName(item)+' — '+item.port:'Select an HDMI input');
+    item=previewTarget(item);
+    if(previewItem===item&&item.id===previewingId&&q('#preview-title').textContent===itemName(item)){
+      if(state.previewMode==='off'&&!q('#preview').classList.contains('is-live'))return;
+      var stable=P.videoStatus();if(state.previewMode==='selected'&&previewValidated&&item.connected&&stable.owner==='preview'&&stable.visible&&!stable.blocked&&!stable.pending)return;
+    }
+    previewItem=item;var hit=q('#preview-hit');hit.disabled=item.kind!=='input';hit.setAttribute('aria-label',item.kind==='input'?'Open '+itemName(item)+' — '+item.port:'Select an HDMI input');
     if(state.previewMode==='off'&&item.id===previewingId&&!q('#preview').classList.contains('is-live'))return;
     if(state.previewMode==='selected'&&item.id===previewingId){
       var active=P.videoStatus();
@@ -452,7 +458,9 @@
     }else node=q('#'+page+' .navitem');if(node)setFocus(node);}
   function setFocus(node){if(!node||node.disabled||launching)return; if(selected===node)return; if(selected)selected.classList.remove('is-focused');selected=node;node.classList.add('is-focused');
     try{node.focus({preventScroll:true});}catch(e){node.focus();}
-    if(node.scrollIntoView)try{node.scrollIntoView({block:'nearest',inline:'nearest',behavior:'instant'});}catch(e){}
+    // A fitted Home row never needs scrollIntoView's synchronous layout check.
+    var fixedFavourite=page==='home'&&!modalOpen&&node.dataset.zone==='favourites'&&q('#favourites').dataset.fitted==='true';
+    if(!fixedFavourite&&node.scrollIntoView)try{node.scrollIntoView({block:'nearest',inline:'nearest',behavior:'instant'});}catch(e){}
     syncFocusFrame();
     if(page==='home'&&!modalOpen&&!movingId&&node.dataset.itemid){var item=lookup(node.dataset.itemid)||fallbackInput(node.dataset.itemid);if(item)preview(item);}}
   function selectSettingsGroup(id){var nested=!!settingsPanel;settingsPanel='';settingsGroup=id;if(nested){fillSettings();setFocus(q('.settings-category[data-group="'+id+'"]'));}qa('.settings-group').forEach(function(n){n.hidden=n.dataset.settingsGroup!==id;});qa('.settings-category').forEach(function(n){n.setAttribute('aria-pressed',String(n.dataset.group===id));});q('#settings-list').scrollTop=0;}

@@ -1,6 +1,6 @@
 {
   "name": "cinematic-tv-launcher",
-  "version": "0.5.1",
+  "version": "0.5.2",
   "private": true,
   "description": "Experimental ad-free personal launcher for Samsung Tizen TV",
   "scripts": {

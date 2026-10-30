@@ -98,7 +98,7 @@ with sync_playwright() as p:
         image=tile.locator('img');logo=tile.locator('.logo')
         assert .86<image.bounding_box()['width']/logo.bounding_box()['width']<=1, 'Native artwork has excessive padding or escapes its tile'
         scale=logo.evaluate("e=>new DOMMatrix(getComputedStyle(e).transform).a")
-        assert 1.035<=scale<=1.045, 'Requested sharper 4 percent lift is outside its bounds'
+        assert 1.015<=scale<=1.025, 'Requested sharper 2 percent lift is outside its bounds'
         assert image.evaluate("e=>parseFloat(getComputedStyle(e.parentElement).borderTopWidth)")>=3, 'Selection edge must remain clear'
         assert image.evaluate("e=>getComputedStyle(e).objectFit")=='contain'
         youtube=page.locator('#favourites .app-card').first
