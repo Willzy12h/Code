@@ -28,3 +28,11 @@ test('all saved IDs are bounded and recently used count is an integer',()=>{
  const M=require('../src/js/model.js');const s=M.load(JSON.stringify({version:1,favouriteIds:['app:'+('x'.repeat(10000)),'input:wrong:1','app:okay'],recentCount:3.4}));
  assert.deepEqual(s.favouriteIds,['app:okay']);assert.equal(s.recentCount,3);
 });
+
+test('signing helper permits the root launcher icon and rejects unrelated or unsafe root paths',()=>{
+ const helper=fs.readFileSync(path.join(root,'scripts/Tizen-Local.ps1'),'utf8');
+ const expression=helper.match(/\$file\.path -notmatch '([^']+)'/);assert.ok(expression);
+ const rule=new RegExp(expression[1]);
+ for(const name of ['icon.png','config.xml','index.html','assets/icon.png','js/app.js'])assert.ok(rule.test(name),name);
+ for(const name of ['iconXpng','icon.png.bak','other.png','../icon.png','/icon.png','x/../icon.png','icon.png/../../key'])assert.ok(!rule.test(name)||/(^|\/)\.\.?($|\/)/.test(name),'Unsafe path accepted: '+name);
+});

@@ -1,4 +1,4 @@
-#requires -Version 5.1
+﻿#requires -Version 5.1
 <#
 Local SDK helper. No certificates/passwords are copied or uploaded.
 Signature inspection checks package contents and certificate metadata, not Samsung trust.
@@ -64,7 +64,7 @@ function Get-SourceManifest {
     if ($manifest.name -ne 'cinematic-tv-launcher' -or $manifest.version -ne $Version) { throw 'Build manifest version/identity mismatch.' }
     $seen = New-Object 'System.Collections.Generic.HashSet[string]'
     foreach ($file in $manifest.files) {
-        if ($file.path -notmatch '^[A-Za-z0-9_-]+(?:/[A-Za-z0-9_.-]+)+$|^(config.xml|index.html)$' -or $file.path -match '(^|/)\.\.?(/|$)' -or -not $seen.Add([string]$file.path)) { throw 'Unsafe or duplicate manifest path.' }
+        if ($file.path -notmatch '^(?:[A-Za-z0-9_-]+(?:/[A-Za-z0-9_.-]+)+|config\.xml|index\.html|icon\.png)$' -or $file.path -match '(^|/)\.\.?(/|$)' -or -not $seen.Add([string]$file.path)) { throw 'Unsafe or duplicate manifest path.' }
         if ($file.sha256 -notmatch '^[0-9a-f]{64}$') { throw 'Invalid source digest.' }
         $source = Join-Path (Join-Path $ProjectRoot 'src') $file.path
         if (-not (Test-Path -LiteralPath $source -PathType Leaf)) { throw "Missing source: $($file.path)" }
