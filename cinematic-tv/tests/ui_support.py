@@ -57,9 +57,10 @@ def render(page):
     html=(ROOT/'src/index.html').read_text(encoding='utf-8')
     css=(ROOT/'src/css/styles.css').read_text(encoding='utf-8')
     images={name:(ROOT/'src/assets'/name).read_bytes() for name in ['wallpaper.jpg','wallpaper-dawn.jpg','wallpaper-twilight.jpg']}
+    for asset in (ROOT/'src/assets/brands').glob('*.png'):images[asset.name]=asset.read_bytes()
     def image_fixture(route,request):
         name=request.url.rsplit('/',1)[-1]
-        if name in images:route.fulfill(status=200,content_type='image/jpeg',body=images[name])
+        if name in images:route.fulfill(status=200,content_type='image/png' if name.endswith('.png') else 'image/jpeg',body=images[name])
         else:route.abort()
     page.route('https://cinematic-fixture.invalid/assets/**',image_fixture)
     html=html.replace('<head>','<head><base href="https://cinematic-fixture.invalid/">',1)

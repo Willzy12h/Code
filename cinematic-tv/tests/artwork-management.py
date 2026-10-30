@@ -17,9 +17,9 @@ with sync_playwright() as p:
   for index in range(7):
    card=cards.nth(index)
    assert card.locator('img.native-icon').count()==1 and card.locator('svg').count()==0
-   assert card.locator('img').evaluate('e=>e.complete&&e.naturalWidth===200&&getComputedStyle(e).objectFit==="contain"')
+   assert card.locator('img').evaluate('e=>e.complete&&e.naturalWidth===(e.classList.contains("publisher-icon")?512:200)&&getComputedStyle(e).objectFit==="contain"')
   page.close()
- case('All seven favourites use installed artwork with its original proportions',artwork)
+ case('Favourites use verified publisher corrections or installed artwork with original proportions',artwork)
  def native_fallback():
   page=browser.new_page(viewport={'width':1920,'height':1080});prepare(page,{'favouriteIds':['app:native.1']},True)
   page.evaluate("(url)=>{window.__apps[1].name='constructor';window.__apps[1].iconPath=url}", 'data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20width=%2220%22%20height=%2220%22%3E%3Crect%20width=%2220%22%20height=%2220%22%20fill=%22red%22/%3E%3C/svg%3E')

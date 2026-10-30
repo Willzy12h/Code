@@ -1,12 +1,12 @@
 {
   "name": "cinematic-tv-launcher",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "private": true,
   "description": "Experimental ad-free personal launcher for Samsung Tizen TV",
   "scripts": {
     "test": "node --test tests/*.test.js",
     "preview": "python3 -m http.server 8765 --directory src",
-    "test:browser": "python tests/browser-acceptance.py && python tests/tizen-preview-acceptance.py && python tests/ui-readiness.py && python tests/hardware-feedback.py && python tests/settings-audit.py && python tests/artwork-management.py && python tests/refinement-acceptance.py && python tests/background-return-acceptance.py && python tests/next-ui-acceptance.py && python tests/wallpaper-upgrade.py",
+    "test:browser": "python tests/browser-acceptance.py && python tests/tizen-preview-acceptance.py && python tests/ui-readiness.py && python tests/hardware-feedback.py && python tests/settings-audit.py && python tests/artwork-management.py && python tests/refinement-acceptance.py && python tests/background-return-acceptance.py && python tests/next-ui-acceptance.py && python tests/wallpaper-upgrade.py && python tests/focus-artwork-feedback.py",
     "build": "node scripts/build.js",
     "syntax": "node scripts/check-source.js",
     "verify": "npm run syntax && npm test && npm run build && python scripts/validate-manifest.py && npm run test:browser",

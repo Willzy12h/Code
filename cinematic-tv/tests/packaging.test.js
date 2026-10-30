@@ -3,10 +3,14 @@ const test=require('node:test'),assert=require('node:assert/strict'),fs=require(
 const root=path.resolve(__dirname,'..');
 test('release identity, privilege and script staging are complete',()=>{
  const meta=require('../package.json'),xml=fs.readFileSync(path.join(root,'src/config.xml'),'utf8');
- assert.equal(meta.version,'0.5.0');assert.ok(xml.includes('version="'+meta.version+'"'));assert.ok(!xml.includes('example.org'));
+ assert.equal(meta.version,'0.5.1');assert.ok(xml.includes('version="'+meta.version+'"'));assert.ok(!xml.includes('example.org'));
  assert.ok(xml.includes('id="CinemTV001.Launcher"'));assert.ok(xml.includes('package="CinemTV001"'));
  assert.ok(xml.includes('http://tizen.org/privilege/package.info'));assert.ok(xml.includes('tizen:content-security-policy'));
  assert.ok(fs.existsSync(path.join(root,'src/assets/icon.png')));
+ assert.ok(xml.includes('<icon src="assets/icon-051.png"/>'));
+ const icon=fs.readFileSync(path.join(root,'src/assets/icon-051.png'));
+ assert.equal(icon.readUInt32BE(16),512);assert.equal(icon.readUInt32BE(20),423);
+ assert.ok(icon.length<300*1024);assert.ok(fs.readFileSync(path.join(root,'src/js/app.js'),'utf8').includes("VERSION='"+meta.version+"'"));
  const built=cp.spawnSync(process.execPath,['scripts/build.js'],{cwd:root,encoding:'utf8'});assert.equal(built.status,0,built.stderr);
  const manifest=JSON.parse(fs.readFileSync(path.join(root,'dist/BUILD-MANIFEST.json')));
  for(const f of ['js/model.js','js/features.js','js/recovery.js','js/platform.js','js/app.js','assets/icon.png'])assert.ok(manifest.files.some(x=>x.path===f),f);

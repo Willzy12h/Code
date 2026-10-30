@@ -1,7 +1,7 @@
 /* Cinematic TV v0.4 — remote-first Samsung TV launcher. */
 (function(w,doc){
   'use strict';
-  var M=w.LauncherModel,P=w.LauncherPlatform,F=w.LauncherFeatures,U=w.LauncherPresentation,VERSION='0.5.0';
+  var M=w.LauncherModel,P=w.LauncherPlatform,F=w.LauncherFeatures,U=w.LauncherPresentation,VERSION='0.5.1';
   var STORAGE='cinematic-tv-v1', APP_CACHE='cinematic-tv-apps-v2', WEATHER_CACHE='cinematic-tv-weather-v1';
   function storageGet(key){try{return localStorage.getItem(key);}catch(e){return null;}}
   var state=M.load(storageGet(STORAGE)),page='home',filter='All',searchTerm='',selected=null,modalOpen=false,modalReturn=null;
@@ -216,11 +216,11 @@
     }
     if(item.kind==='app'){
       word.textContent=name;word.classList.add('name-fallback');var choice=w.LauncherAppArtwork.choice(item);
-      if(choice.kind==='native'){
-        var img=el('img','native-icon');img.alt='';img.decoding='async';
+      if(choice.kind==='native'||choice.kind==='publisher'){
+        var img=el('img','native-icon'+(choice.kind==='publisher'?' publisher-icon':''));img.alt='';img.decoding='async';
         img.onload=function(){if(!w.LauncherAppArtwork.fit(img.naturalWidth,img.naturalHeight)){img.onerror();return;}word.style.display='none';l.classList.add('has-native-art');};
         img.onerror=function(){img.remove();word.style.display='';l.classList.remove('has-native-art');};
-        P.resolveIcon(choice.source,function(url){if(url)img.src=url;else img.onerror();});l.appendChild(img);
+        if(choice.kind==='publisher')img.src=choice.source;else P.resolveIcon(choice.source,function(url){if(url)img.src=url;else img.onerror();});l.appendChild(img);
       }
     }
     return l;}

@@ -1,0 +1,79 @@
+[
+  {
+    "name": "YouTube",
+    "file": "youtube.png",
+    "publisher": "Google LLC",
+    "product": "YouTube",
+    "source": "https://apps.apple.com/gb/app/youtube/id544007664?uo=4",
+    "metadata_url": "https://itunes.apple.com/lookup?id=544007664&country=gb",
+    "artwork_url": "https://is1-ssl.mzstatic.com/image/thumb/Purple211/v4/82/43/be/8243be7f-17c3-33ae-720a-ffcde48bed61/logo_youtube_2024_q4_color-0-0-1x_U007emarketing-0-0-0-7-0-0-0-85-220.png/512x512bb.jpg",
+    "sha256": "fb522294bf6221f2f6bf336fb8b777f3b1f1860ed444fc805c338708a93d0aaf",
+    "scope": "Publisher-supplied App Store artwork; not asserted to be the Samsung TV-specific asset. Trademarks and copyright remain with publisher; no open licence asserted. Used solely to identify installed app."
+  },
+  {
+    "name": "Prime Video",
+    "file": "prime-video.png",
+    "publisher": "AMZN Mobile LLC",
+    "product": "Amazon Prime Video",
+    "source": "https://apps.apple.com/gb/app/amazon-prime-video/id545519333?uo=4",
+    "metadata_url": "https://itunes.apple.com/lookup?id=545519333&country=gb",
+    "artwork_url": "https://is1-ssl.mzstatic.com/image/thumb/Purple221/v4/1b/66/ff/1b66ffd8-2f43-9f46-f4ad-f308ad3dcb13/AppIcon-0-0-1x_U007epad-0-1-0-0-85-220.png/512x512bb.jpg",
+    "sha256": "c147fda4919b0343bf1a803484be58fb32d26dea10db28b4df9f2b722ac81ee5",
+    "scope": "Publisher-supplied App Store artwork; not asserted to be the Samsung TV-specific asset. Trademarks and copyright remain with publisher; no open licence asserted. Used solely to identify installed app."
+  },
+  {
+    "name": "BBC iPlayer",
+    "file": "bbc-iplayer.png",
+    "publisher": "BBC Media Applications Technologies Limited",
+    "product": "BBC iPlayer",
+    "source": "https://apps.apple.com/gb/app/bbc-iplayer/id416580485?uo=4",
+    "metadata_url": "https://itunes.apple.com/lookup?id=416580485&country=gb",
+    "artwork_url": "https://is1-ssl.mzstatic.com/image/thumb/Purple211/v4/ab/6c/b4/ab6cb4dc-5324-1372-0b9c-b9cfe9ba0147/AppIcon-0-0-1x_U007epad-0-0-0-1-0-85-220.png/512x512bb.jpg",
+    "sha256": "917ba1b481c87a7d7fffcb86a77bbff7b5d8d7402d8579e01c0efc1d571cff97",
+    "scope": "Publisher-supplied App Store artwork; not asserted to be the Samsung TV-specific asset. Trademarks and copyright remain with publisher; no open licence asserted. Used solely to identify installed app."
+  },
+  {
+    "name": "BBC Sounds",
+    "file": "bbc-sounds.png",
+    "publisher": "BBC Media Applications Technologies Limited",
+    "product": "BBC Sounds",
+    "source": "https://apps.apple.com/gb/app/bbc-sounds/id1380676511?uo=4",
+    "metadata_url": "https://itunes.apple.com/lookup?id=1380676511&country=gb",
+    "artwork_url": "https://is1-ssl.mzstatic.com/image/thumb/Purple211/v4/03/6c/80/036c8017-ac15-9942-325f-7a4f88de3247/AppIcon-0-0-1x_U007epad-0-1-0-sRGB-0-85-220.png/512x512bb.jpg",
+    "sha256": "3c9aee96d3862220fc5799e459a491d7b0a8936a0347ed35a00bbf2430b40929",
+    "scope": "Publisher-supplied App Store artwork; not asserted to be the Samsung TV-specific asset. Trademarks and copyright remain with publisher; no open licence asserted. Used solely to identify installed app."
+  },
+  {
+    "name": "Channel 4",
+    "file": "channel-4.png",
+    "publisher": "Channel 4",
+    "product": "Channel 4",
+    "source": "https://apps.apple.com/gb/app/channel-4/id432494037?uo=4",
+    "metadata_url": "https://itunes.apple.com/lookup?id=432494037&country=gb",
+    "artwork_url": "https://is1-ssl.mzstatic.com/image/thumb/Purple221/v4/d9/90/e0/d990e08b-b129-0411-96c0-155caeceb838/AppIcon-0-0-1x_U007emarketing-0-8-0-sRGB-85-220.png/512x512bb.jpg",
+    "sha256": "4834987291e998273d7da385151b7545410e4c84cab0f8ed6548d646b47e48be",
+    "scope": "Publisher-supplied App Store artwork; not asserted to be the Samsung TV-specific asset. Trademarks and copyright remain with publisher; no open licence asserted. Used solely to identify installed app."
+  },
+  {
+    "name": "SmartThings",
+    "file": "smartthings.png",
+    "publisher": "Samsung Electronics Co., Ltd.",
+    "product": "SmartThings",
+    "source": "https://apps.apple.com/gb/app/smartthings/id1222822904?uo=4",
+    "metadata_url": "https://itunes.apple.com/lookup?id=1222822904&country=gb",
+    "artwork_url": "https://is1-ssl.mzstatic.com/image/thumb/Purple221/v4/a0/73/d2/a073d200-46c9-cd20-5f1d-7c66fcf931e3/AppIcon-0-0-1x_U007epad-0-1-0-85-220.png/512x512bb.jpg",
+    "sha256": "cb9bfbe77c871a26e06af73c47809c529f85b4a4f9feff2dd0e94c703837ab1d",
+    "scope": "Publisher-supplied App Store artwork; not asserted to be the Samsung TV-specific asset. Trademarks and copyright remain with publisher; no open licence asserted. Used solely to identify installed app."
+  },
+  {
+    "name": "Samsung Health",
+    "file": "samsung-health.png",
+    "publisher": "Samsung Electronics Co., Ltd.",
+    "product": "Samsung Health",
+    "source": "https://apps.apple.com/gb/app/samsung-health/id1224541484?uo=4",
+    "metadata_url": "https://itunes.apple.com/lookup?id=1224541484&country=gb",
+    "artwork_url": "https://is1-ssl.mzstatic.com/image/thumb/Purple211/v4/9a/5b/47/9a5b476f-137c-db51-c9bc-4dece7a64e85/AppIcon-0-0-1x_U007emarketing-0-4-0-0-85-220.png/512x512bb.jpg",
+    "sha256": "8e982cc63d47e2bfc3c0b5b09f32d42a969567df8707b53bd43147fdd089e373",
+    "scope": "Publisher-supplied App Store artwork; not asserted to be the Samsung TV-specific asset. Trademarks and copyright remain with publisher; no open licence asserted. Used solely to identify installed app."
+  }
+]

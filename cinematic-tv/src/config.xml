@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<widget xmlns="http://www.w3.org/ns/widgets" xmlns:tizen="http://tizen.org/ns/widgets" id="https://github.com/Willzy12h/cinematic-tv-launcher" version="0.5.0" viewmodes="maximized">
+<widget xmlns="http://www.w3.org/ns/widgets" xmlns:tizen="http://tizen.org/ns/widgets" id="https://github.com/Willzy12h/cinematic-tv-launcher" version="0.5.1" viewmodes="maximized">
   <name>Cinematic TV</name>
   <description>Personal ad-free Samsung TV app launcher</description>
-  <icon src="assets/icon.png"/>
+  <icon src="assets/icon-051.png"/>
   <content src="index.html"/>
   <feature name="http://tizen.org/feature/screen.size.normal.1080.1920"/>
   <tizen:application id="CinemTV001.Launcher" package="CinemTV001" required_version="6.0"/>
