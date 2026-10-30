@@ -1,3 +1,5 @@
+> Current candidate: [0.5.4 source handoff, bounded return and quieter Home refresh](TV-FEEDBACK-0.5.4.md). Earlier version-specific counts and acceptance notes below are historical.
+
 > Current candidate: [0.5.0 navigation, compact Settings and wallpaper manager](TV-FEEDBACK-0.5.0.md). Earlier version-specific results below remain historical; the local delivery report distinguishes automated checks, SDK installation and physical observation.
 
 > Current patch: [0.4.1 hardware feedback](TV-FEEDBACK-0.4.1.md). The user accepted initial live HDMI on the S95H and requested current-source PC preview on by default. Earlier default-off/layout notes below describe 0.4.0 and are historical; explicit Off, import and interruption recovery remain Off.

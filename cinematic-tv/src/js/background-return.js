@@ -11,7 +11,7 @@
   function tick(){
    if(!enabled||paused)return;
    var now=env.now();
-   if(!env.hidden()){homeSince=null;pendingAt=null;attempts=[];return;}
+   if(!env.hidden()){homeSince=null;pendingAt=null;return;}
    if(pendingAt!==null){if(now-pendingAt>5000)disable('Return timed out; disabled for safety');return;}
    var id;try{id=env.foreground();checks++;lastCheck=now;lastScreen=id==='com.samsung.tv.csfs'?'Samsung Home':id?'Other app or input':'No foreground';}catch(e){disable('Foreground query failed; return disabled');return;}
    // Never bring the launcher over an app, input viewer, settings, or unknown screen.

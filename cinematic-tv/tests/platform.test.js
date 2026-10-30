@@ -144,3 +144,24 @@ test('previewing the already active input does not reselect HDMI or restore it u
  assert.equal(source().number,1);
  assert.ok(calls.includes('hide'));
 });
+
+test('current-source-only preview rechecks after queueing and never selects an externally changed input',async()=>{
+ const r=makePlatform();let message='';
+ const pending=r.P.preview(hdmi(1),rect,()=>{},e=>message=e,true);
+ r.setCurrent(hdmi(2));
+ assert.equal(await pending,false);assert.equal(r.source().number,2);
+ assert.ok(!r.calls.some(x=>x.startsWith('set:')||x.startsWith('show:')||x==='hide'),JSON.stringify(r.calls));
+ assert.match(message,/current.*source|current.*input/i);assert.equal(r.P.videoStatus().owner,'none');
+});
+test('current-source-only preview shows the active input and cleanup does not select another source',async()=>{
+ const r=makePlatform();assert.equal(await r.P.preview(hdmi(1),rect,()=>{},()=>{},true),true);
+ r.setCurrent(hdmi(2));assert.equal(await r.P.stopPreview(),true);
+ assert.equal(r.source().number,2);assert.ok(!r.calls.some(x=>x.startsWith('set:')));
+});
+
+test('current-source-only preview rechecks an external source change during asynchronous hide',async()=>{
+ const r=makePlatform({delay:20});await r.P.preview(hdmi(1),rect,()=>{},()=>{},true);
+ let message='';const pending=r.P.preview(hdmi(1),rect,()=>{},e=>message=e,true);
+ await tick(3);r.setCurrent(hdmi(2));assert.equal(await pending,false);
+ assert.equal(r.source().number,2);assert.ok(!r.calls.some(x=>x.startsWith('set:')));assert.match(message,/current.*source/i);
+});

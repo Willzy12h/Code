@@ -1,7 +1,7 @@
 /* Cinematic TV v0.4 — remote-first Samsung TV launcher. */
 (function(w,doc){
   'use strict';
-  var M=w.LauncherModel,P=w.LauncherPlatform,F=w.LauncherFeatures,U=w.LauncherPresentation,VERSION='0.5.3';
+  var M=w.LauncherModel,P=w.LauncherPlatform,F=w.LauncherFeatures,U=w.LauncherPresentation,VERSION='0.5.4';
   var STORAGE='cinematic-tv-v1', APP_CACHE='cinematic-tv-apps-v2', WEATHER_CACHE='cinematic-tv-weather-v1';
   function storageGet(key){try{return localStorage.getItem(key);}catch(e){return null;}}
   var state=M.load(storageGet(STORAGE)),page='home',filter='All',searchTerm='',selected=null,modalOpen=false,modalReturn=null;
@@ -13,6 +13,7 @@
   var wallpaperManager=null,wallpaperCache=null,wallpaperBooting=false,curatedUri='',curatedRecord=null,curatedStats={count:0,bytes:0};
   var dailyClient=null,dailyRecord=null,dailyObjectUrl='',wallpaperStatus='Bundled wallpaper',weatherStatus='Not checked',weatherError='';
   try{var imageDb=null;try{imageDb=w.indexedDB;}catch(e){}dailyClient=w.LauncherWallpapers.create(w.fetch.bind(w),w.LauncherWallpapers.browserCache(imageDb));}catch(e){}
+  var recentRenderKey=null,favouriteRenderKey=null;
   var previewValidated=false,libraryReturn=null,settingsGroup='home',settingsPanel='',settingsPreviewKey='',inputReturn='home';
   var previewItem=null,undoRecord=null,undoTimer=null,solarData=null,wallpaperCurrent='',wallpaperPending='',wallpaperPaintToken=0,wallpaperFadeCommit=null;
   var weatherTime=0,weatherInFlight=false,weatherRequest=0,iconLoads={},viewportWidth=w.innerWidth,viewportHeight=w.innerHeight;
@@ -104,7 +105,7 @@
   }
   function captureFocus(){return selected?{itemId:selected.dataset.itemid,action:selected.dataset.action,zone:selected.dataset.zone}:null;}
   function refreshVisible(){
-    if(modalOpen||inputMode||movingId||fullscreenInput||launching||doc.hidden){refreshDeferred=true;return;}
+    if(modalOpen||inputMode||movingId||fullscreenInput||launching||doc.hidden||P.videoStatus().pending){refreshDeferred=true;return;}
     refreshDeferred=false;var focus=firstDataRender&&page==='home'?null:captureFocus();firstDataRender=false;showPage(page,focus);
   }
   function flushRefresh(){if(refreshDeferred&&!modalOpen&&!movingId&&!inputMode&&!launching&&!fullscreenInput)refreshVisible();}
@@ -236,12 +237,13 @@
     if(isDemo()&&out.length<4)['YouTube','Apple TV','Netflix'].forEach(function(n){var a=matchApp(n);if(a&&!used[a.id]){used[a.id]=true;out.push(a);}});
     return out.slice(0,state.recentCount);}
   function timeLabel(id){var r=state.recent.find(function(x){return x.id===id;});if(!r)return'Quick access';var mins=Math.max(0,Math.floor((Date.now()-r.at)/60000));if(mins<1)return'Just now';if(mins<60)return mins+' min ago';var hours=Math.floor(mins/60);if(hours<24)return hours+' hr ago';return Math.floor(hours/24)+' days ago';}
-  function fillRecent(){var area=q('#recent-list');area.textContent='';recentItems().forEach(function(item){var b=button('','recent-item',item);b.dataset.zone='recent';b.appendChild(logo(item));var info=el('div','recent-copy');info.appendChild(el('span','name',itemName(item)));info.appendChild(el('span','meta',timeLabel(item.id)));b.appendChild(info);b.onclick=function(){activate(item);};area.appendChild(b);});
+  function homeItemKey(item){return[item.id,item.nativeId||'',item.kind,itemName(item),item.icon||'',item.port||'',item.connected!==false,state.inputIcons[item.port]||'',state.hiddenAppIds.indexOf(item.id)>=0];}
+  function fillRecent(){var area=q('#recent-list'),items=recentItems(),key=JSON.stringify(items.map(function(item){return[homeItemKey(item),timeLabel(item.id)];}));if(key===recentRenderKey&&area.firstElementChild)return;recentRenderKey=key;area.textContent='';items.forEach(function(item){var b=button('','recent-item',item);b.dataset.zone='recent';b.appendChild(logo(item));var info=el('div','recent-copy');info.appendChild(el('span','name',itemName(item)));info.appendChild(el('span','meta',timeLabel(item.id)));b.appendChild(info);b.onclick=function(){activate(item);};area.appendChild(b);});
     if(!area.children.length)area.appendChild(el('div','empty-placeholder','Your recently opened apps will appear here.'));}
   function appCard(item,zone){var b=button('','app-card',item);b.dataset.zone=zone;b.appendChild(logo(item));b.appendChild(el('span','name',itemName(item)));if(item.kind==='app'&&state.hiddenAppIds.indexOf(item.id)>=0)b.classList.add('hidden-app');
     if(item.kind==='input'&&!item.connected)b.classList.add('unavailable');
     b.onclick=function(){if(page==='edit')editActions(item);else if(page==='apps'&&editingFromApps){toggleFavourite(item);refreshView('apps',b.dataset.itemid);return;}else activate(item);};return b;}
-  function fillFavourites(){var area=q('#favourites');area.textContent='';favouriteItems().forEach(function(item){area.appendChild(appCard(item,'favourites'));});
+  function fillFavourites(){var area=q('#favourites'),items=favouriteItems(),key=JSON.stringify(items.map(homeItemKey));if(key===favouriteRenderKey&&area.firstElementChild)return;favouriteRenderKey=key;area.textContent='';items.forEach(function(item){area.appendChild(appCard(item,'favourites'));});
     var library=button('apps','app-card library-card');library.dataset.zone='favourites';library.appendChild(el('div','logo library-logo','All apps'));library.appendChild(el('span','name','All apps'));area.appendChild(library);
     area.dataset.fitted=area.children.length<=10?'true':'false';
     q('#favourites-count').textContent=area.dataset.fitted==='false'?'Use ← → for more':'';
@@ -420,7 +422,6 @@
       var stable=P.videoStatus();if(state.previewMode==='selected'&&previewValidated&&item.connected&&stable.owner==='preview'&&stable.visible&&!stable.blocked&&!stable.pending)return;
     }
     previewItem=item;var hit=q('#preview-hit');hit.disabled=item.kind!=='input';hit.setAttribute('aria-label',item.kind==='input'?'Open '+itemName(item)+' — '+item.port:'Select an HDMI input');
-    if(state.previewMode==='off'&&item.id===previewingId&&!q('#preview').classList.contains('is-live'))return;
     if(state.previewMode==='selected'&&item.id===previewingId){
       var active=P.videoStatus();
       if(item.connected&&active.owner==='preview'&&active.visible&&!active.blocked&&!active.pending){
@@ -441,8 +442,9 @@
 
       previewTimer=setTimeout(function(){if(gen!==previewGeneration||page!=='home'||doc.hidden)return;
         var r=q('#preview-media').getBoundingClientRect(),rect=U.percentages(U.innerRect(r,w.innerWidth,w.innerHeight),w.innerWidth,w.innerHeight);
-        videoMarker(true);P.preview(item.raw,rect,function(){if(gen!==previewGeneration||page!=='home'){stopVideoPreview();return;}previewValidated=true;area.classList.add('is-live');q('#preview-indicator').hidden=true;q('#preview-indicator').textContent='';q('#preview-meta').textContent=item.port;},
-          function(message){if(gen===previewGeneration){caption.textContent='Preview unavailable';state.previewMode='off';save();logEvent('Preview failed',message);}});
+        videoMarker(true);var operation=P.preview(item.raw,rect,function(){if(gen!==previewGeneration||page!=='home'){stopVideoPreview();return;}previewValidated=true;area.classList.add('is-live');q('#preview-indicator').hidden=true;q('#preview-indicator').textContent='';q('#preview-meta').textContent=item.port;},
+          function(message){if(gen===previewGeneration){caption.textContent='Preview unavailable';state.previewMode='off';save();logEvent('Preview failed',message);}},state.autoPreviewCurrentOnly);
+        Promise.resolve(operation).then(flushRefresh);
       },115);
     }else{art.classList.add('art-'+brandClass(item.name));art.appendChild(el('div','orbit'));var big=logo(item);big.classList.add('hero-logo');art.appendChild(big);art.appendChild(el('span','art-caption',''));}
   }

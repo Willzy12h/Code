@@ -75,13 +75,14 @@
     }
     function valid(source){return source && (source.type==='HDMI'||source.type==='TV') && Number.isInteger(Number(source.number)) && Number(source.number)>=0;}
     function guard(fail){if(!tv||blocked||pending){error(fail,!tv?'HDMI API unavailable':'HDMI recovery required; preview is suspended');return false;}return true;}
-    function preview(source,rect,ok,fail){
+    function preview(source,rect,ok,fail,currentOnly){
       var token=++generation;
       if(!valid(source)||!Array.isArray(rect)||rect.length!==4){error(fail,'HDMI preview requires a valid source and rectangle');return Promise.resolve(false);}
       return enqueue(async function(){
         if(token!==generation||!guard(fail))return false;
         if(owner==='fullscreen'){error(fail,'Close fullscreen input first');return false;}
         try{
+          if(currentOnly&&!sameSource(tv.getSource('MAIN'),source))throw new Error('Current source changed; PC preview is paused');
           if(owner!=='preview'){
             originalSource=tv.getSource('MAIN');if(!originalSource)throw new Error('Cannot establish original source');owner='preview';
           }
@@ -89,7 +90,10 @@
           if(token!==generation)return false;
           previewSource=source;lastOperation='Changing preview source';
           // Avoid retriggering the active HDMI source and its signal handshake.
-          if(!sameSource(tv.getSource('MAIN'),source))await setSource(source);
+          if(!sameSource(tv.getSource('MAIN'),source)){
+            if(currentOnly)throw new Error('Current source changed; PC preview is paused');
+            await setSource(source);
+          }
           if(token!==generation)return false;
           lastOperation='Displaying HDMI thumbnail';await show(rect);
           if(token!==generation)return false;
@@ -215,7 +219,7 @@
         function () { if (done) return; done = true; clearTimeout(timer); cb(path); }, 'r'); }
       catch (e) { if (!done) { done = true; clearTimeout(timer); cb(path); } }
     },
-    preview:function (source, rect, ok, fail) { return video.preview(source, rect, ok, fail); },
+    preview:function (source, rect, ok, fail, currentOnly) { return video.preview(source, rect, ok, fail, currentOnly); },
     stopPreview:function () { return video.stopPreview(); },
     showInputFullscreen:function (source, ok, fail) { return video.openFullscreen(source, ok, fail); },
     leaveFullscreen:function () { return video.leaveFullscreen(); },

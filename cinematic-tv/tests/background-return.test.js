@@ -10,4 +10,13 @@ test('disable cancels the worker and no late callback re-enables return',()=>{co
 test('launch failure, missing query and a stuck launch fail closed',()=>{for(const kind of ['query','launch','timeout']){const h=harness();h.r.enable();if(kind==='query')h.set({fail:true});h.r.tick();h.set({now:10400});h.r.tick();if(kind==='launch')h.callbacks[0].bad('Denied');if(kind==='timeout'){h.set({now:16000});h.r.tick();}assert.equal(h.r.status().enabled,false);assert.ok(h.r.status().error);}});
 test('retry budget prevents repeated successful acknowledgements forming a launch loop',()=>{const h=harness();h.r.enable();for(let n=0;n<5;n++){h.set({now:10000+n*6000});h.r.tick();h.set({now:10400+n*6000});h.r.tick();if(h.callbacks[n])h.callbacks[n].ok();}assert.equal(h.launches,3);assert.equal(h.r.status().enabled,false);});
 
-test('successful visible returns reset failure budget for normal repeated app usage',()=>{const h=harness();h.r.enable();for(let n=0;n<5;n++){h.set({now:10000+n*6000,hidden:true});h.r.tick();h.set({now:10400+n*6000});h.r.tick();assert.equal(h.launches,n+1);h.callbacks[n].ok();h.set({hidden:false});h.r.tick();}assert.equal(h.r.status().enabled,true);});
+test('normal repeated app usage outside the rolling minute retains automatic return',()=>{const h=harness();h.r.enable();for(let n=0;n<5;n++){h.set({now:10000+n*70000,hidden:true});h.r.tick();h.set({now:10400+n*70000});h.r.tick();assert.equal(h.launches,n+1);h.callbacks[n].ok();h.set({hidden:false});h.r.tick();}assert.equal(h.r.status().enabled,true);});
+
+test('successful visible returns cannot reset the rolling budget and trap the user in a relaunch loop',()=>{
+ const h=harness();h.r.enable();
+ for(let n=0;n<5;n++){
+  h.set({now:10000+n*6000,hidden:true});h.r.tick();h.set({now:10400+n*6000});h.r.tick();
+  if(h.callbacks[n])h.callbacks[n].ok();h.set({hidden:false});h.r.tick();
+ }
+ assert.equal(h.launches,3);assert.equal(h.r.status().enabled,false);assert.match(h.r.status().error,/Repeated return/);
+});
