@@ -1,10 +1,11 @@
 /* Cinematic TV v0.4 — remote-first Samsung TV launcher. */
 (function(w,doc){
   'use strict';
-  var M=w.LauncherModel,P=w.LauncherPlatform,F=w.LauncherFeatures,U=w.LauncherPresentation,VERSION='0.5.4';
+  var M=w.LauncherModel,P=w.LauncherPlatform,F=w.LauncherFeatures,U=w.LauncherPresentation,VERSION='0.5.5';
   var STORAGE='cinematic-tv-v1', APP_CACHE='cinematic-tv-apps-v2', WEATHER_CACHE='cinematic-tv-weather-v1';
   function storageGet(key){try{return localStorage.getItem(key);}catch(e){return null;}}
   var state=M.load(storageGet(STORAGE)),page='home',filter='All',searchTerm='',selected=null,modalOpen=false,modalReturn=null;
+  var inputDiscoveryStatus='pending';
   var catalog=[],inputList=[],appById={},inputById={},hiddenBack=false,editingFromApps=false,fullscreenInput=false;
   var toastTimer,previewTimer,previewGeneration=0,refreshGeneration=0,refreshThrottle=0,enterDown=false,enterLong=false,enterTimer=null;
   var inputMode=false,movingId=null,movingOriginal=null,diagnostics={status:'Not checked',error:'',lastCheck:0};
@@ -15,7 +16,7 @@
   try{var imageDb=null;try{imageDb=w.indexedDB;}catch(e){}dailyClient=w.LauncherWallpapers.create(w.fetch.bind(w),w.LauncherWallpapers.browserCache(imageDb));}catch(e){}
   var recentRenderKey=null,favouriteRenderKey=null;
   var previewValidated=false,libraryReturn=null,settingsGroup='home',settingsPanel='',settingsPreviewKey='',inputReturn='home';
-  var previewItem=null,undoRecord=null,undoTimer=null,solarData=null,wallpaperCurrent='',wallpaperPending='',wallpaperPaintToken=0,wallpaperFadeCommit=null;
+  var previewItem=null,undoRecord=null,undoTimer=null,solarData=null,wallpaperCurrent='',wallpaperPending='',wallpaperPaintToken=0,wallpaperFadeCommit=null,wallpaperPainted=false;
   var weatherTime=0,weatherInFlight=false,weatherRequest=0,iconLoads={},viewportWidth=w.innerWidth,viewportHeight=w.innerHeight;
   var q=function(s){return doc.querySelector(s);};
   var qa=function(s){return Array.prototype.slice.call(doc.querySelectorAll(s));};
@@ -80,7 +81,7 @@
   function syncFocusFrame(){var frame=q('#focus-frame');if(frame)frame.hidden=true;}
   function updateDimming(){var shade=q('#ambient-shade');if(shade)shade.style.opacity=String(state.autoDimming?U.dimming(new Date(),solarData):0);}
   function paintWallpaper(uri,onCommit,onFail){
-    if(uri===wallpaperCurrent){++wallpaperPaintToken;wallpaperPending='';if(wallpaperFadeCommit)wallpaperFadeCommit(true);if(onCommit)onCommit();return;}if(uri===wallpaperPending)return;
+    if(uri===wallpaperCurrent){wallpaperPainted=true;++wallpaperPaintToken;wallpaperPending='';if(wallpaperFadeCommit)wallpaperFadeCommit(true);if(onCommit)onCommit();return;}if(uri===wallpaperPending)return;
     wallpaperPending=uri;var token=++wallpaperPaintToken,image=new Image(),settled=false,timer;
     function fail(){if(settled)return;settled=true;clearTimeout(timer);if(token===wallpaperPaintToken){wallpaperPending='';wallpaperStatus='Image unavailable; keeping current wallpaper';}if(onFail)onFail();}
     timer=setTimeout(fail,6500);image.referrerPolicy='no-referrer';image.onerror=fail;
@@ -89,6 +90,7 @@
         if(settled)return;if(token!==wallpaperPaintToken){settled=true;clearTimeout(timer);if(onFail)onFail();return;}
         if(image.naturalWidth>8192||image.naturalHeight>8192){fail();return;}settled=true;clearTimeout(timer);wallpaperPending='';
         if(wallpaperFadeCommit)wallpaperFadeCommit();var wall=q('.backdrop'),next=q('#wallpaper-next');
+        if(!wallpaperPainted){wall.style.backgroundImage='url('+JSON.stringify(uri)+')';wallpaperCurrent=uri;wallpaperPainted=true;if(onCommit)onCommit();if(page==='settings')settingsHomePreview();return;}
         if(!next){next=el('div','backdrop wallpaper-next');next.id='wallpaper-next';next.setAttribute('aria-hidden','true');doc.body.insertBefore(next,q('.scrim'));}
         next.style.backgroundImage='url('+JSON.stringify(uri)+')';next.style.opacity='0';next.getBoundingClientRect();
         var finishTimer,finished=false;function finish(cancel){if(finished)return;finished=true;clearTimeout(finishTimer);if(!cancel){wall.style.backgroundImage='url('+JSON.stringify(uri)+')';wallpaperCurrent=uri;}next.style.transition='none';next.style.opacity='0';next.getBoundingClientRect();next.style.transition='';wallpaperFadeCommit=null;if(!cancel&&onCommit)onCommit();if(cancel&&onFail)onFail();if(page==='settings')settingsHomePreview();}
@@ -226,7 +228,7 @@
     }
     return l;}
   function button(action,cls,item){var b=el('button','navitem '+(cls||''));b.type='button';if(action)b.dataset.action=action;if(item)b.dataset.itemid=item.id;return b;}
-  function fallbackInput(id){var match=/^input:(HDMI|TV):(\d+)$/.exec(id);if(!match)return null;var port=match[1]+' '+match[2];return{id:id,kind:'input',port:port,name:port,connected:false,raw:null};}
+  function fallbackInput(id){var match=/^input:(HDMI|TV):(\d+)$/.exec(id);if(!match)return null;var port=match[1]+' '+match[2];return{id:id,kind:'input',port:port,name:state.pcPort===port?'PC':port,connected:false,pending:inputDiscoveryStatus==='pending',discoveryFailed:inputDiscoveryStatus==='failed',raw:null};}
   function favouriteItems(){return(state.favouriteIds||[]).map(function(id){return lookup(id)||fallbackInput(id);}).filter(Boolean);}
   function recentItems(){var out=[],used={};state.recent.forEach(function(r){var item=lookup(r.id);
     if(!item||used[r.id]||item.kind==='app'&&state.hiddenAppIds.indexOf(item.id)>=0)return;
@@ -237,17 +239,19 @@
     if(isDemo()&&out.length<4)['YouTube','Apple TV','Netflix'].forEach(function(n){var a=matchApp(n);if(a&&!used[a.id]){used[a.id]=true;out.push(a);}});
     return out.slice(0,state.recentCount);}
   function timeLabel(id){var r=state.recent.find(function(x){return x.id===id;});if(!r)return'Quick access';var mins=Math.max(0,Math.floor((Date.now()-r.at)/60000));if(mins<1)return'Just now';if(mins<60)return mins+' min ago';var hours=Math.floor(mins/60);if(hours<24)return hours+' hr ago';return Math.floor(hours/24)+' days ago';}
-  function homeItemKey(item){return[item.id,item.nativeId||'',item.kind,itemName(item),item.icon||'',item.port||'',item.connected!==false,state.inputIcons[item.port]||'',state.hiddenAppIds.indexOf(item.id)>=0];}
-  function fillRecent(){var area=q('#recent-list'),items=recentItems(),key=JSON.stringify(items.map(function(item){return[homeItemKey(item),timeLabel(item.id)];}));if(key===recentRenderKey&&area.firstElementChild)return;recentRenderKey=key;area.textContent='';items.forEach(function(item){var b=button('','recent-item',item);b.dataset.zone='recent';b.appendChild(logo(item));var info=el('div','recent-copy');info.appendChild(el('span','name',itemName(item)));info.appendChild(el('span','meta',timeLabel(item.id)));b.appendChild(info);b.onclick=function(){activate(item);};area.appendChild(b);});
-    if(!area.children.length)area.appendChild(el('div','empty-placeholder','Your recently opened apps will appear here.'));}
+  function homeItemKey(item){return[item.id,item.nativeId||'',item.kind,itemName(item),item.icon||'',item.port||'',item.connected!==false,state.inputIcons[item.port]||'',state.hiddenAppIds.indexOf(item.id)>=0,!!item.pending,!!item.discoveryFailed];}
+  function homeNode(area,id,key,create){var old=Array.prototype.find.call(area.children,function(n){return n.dataset.itemid===id&&n._homeKey===key;});if(old)return old;var node=create();node._homeKey=key;return node;}
+  function syncHomeNodes(area,nodes){nodes.forEach(function(node,i){if(area.children[i]!==node)area.insertBefore(node,area.children[i]||null);});Array.prototype.slice.call(area.children).forEach(function(n){if(nodes.indexOf(n)<0)n.remove();});}
+  function fillRecent(){var area=q('#recent-list'),items=recentItems(),key=JSON.stringify(items.map(function(item){return[homeItemKey(item),timeLabel(item.id)];}));if(key===recentRenderKey&&area.firstElementChild)return;recentRenderKey=key;
+    var nodes=items.map(function(item){return homeNode(area,item.id,JSON.stringify([homeItemKey(item),timeLabel(item.id)]),function(){var b=button('','recent-item',item);b.dataset.zone='recent';b.appendChild(logo(item));var info=el('div','recent-copy');info.appendChild(el('span','name',itemName(item)));info.appendChild(el('span','meta',timeLabel(item.id)));b.appendChild(info);b.onclick=function(){activate(item);};return b;});});
+    if(!nodes.length)nodes.push(el('div','empty-placeholder','Your recently opened apps will appear here.'));syncHomeNodes(area,nodes);}
   function appCard(item,zone){var b=button('','app-card',item);b.dataset.zone=zone;b.appendChild(logo(item));b.appendChild(el('span','name',itemName(item)));if(item.kind==='app'&&state.hiddenAppIds.indexOf(item.id)>=0)b.classList.add('hidden-app');
-    if(item.kind==='input'&&!item.connected)b.classList.add('unavailable');
+    if(item.kind==='input'&&!item.connected&&!item.pending)b.classList.add('unavailable');
     b.onclick=function(){if(page==='edit')editActions(item);else if(page==='apps'&&editingFromApps){toggleFavourite(item);refreshView('apps',b.dataset.itemid);return;}else activate(item);};return b;}
-  function fillFavourites(){var area=q('#favourites'),items=favouriteItems(),key=JSON.stringify(items.map(homeItemKey));if(key===favouriteRenderKey&&area.firstElementChild)return;favouriteRenderKey=key;area.textContent='';items.forEach(function(item){area.appendChild(appCard(item,'favourites'));});
-    var library=button('apps','app-card library-card');library.dataset.zone='favourites';library.appendChild(el('div','logo library-logo','All apps'));library.appendChild(el('span','name','All apps'));area.appendChild(library);
-    area.dataset.fitted=area.children.length<=10?'true':'false';
-    q('#favourites-count').textContent=area.dataset.fitted==='false'?'Use ← → for more':'';
-    if(!area.children.length){var b=button('apps','pill');b.textContent='Add favourite apps';area.appendChild(b);}}
+  function fillFavourites(){var area=q('#favourites'),items=favouriteItems(),key=JSON.stringify(items.map(homeItemKey));if(key===favouriteRenderKey&&area.firstElementChild)return;favouriteRenderKey=key;
+    var nodes=items.map(function(item){return homeNode(area,item.id,JSON.stringify(homeItemKey(item)),function(){return appCard(item,'favourites');});});
+    var library=area.querySelector('[data-action="apps"]');if(!library){library=button('apps','app-card library-card');library.dataset.zone='favourites';library.appendChild(el('div','logo library-logo','All apps'));library.appendChild(el('span','name','All apps'));}nodes.push(library);syncHomeNodes(area,nodes);
+    area.dataset.fitted=area.children.length<=10?'true':'false';q('#favourites-count').textContent=area.dataset.fitted==='false'?'Use ← → for more':'';}
   function fillApps(){var area=q('#apps-grid');area.textContent='';q('[data-action="manage-hidden"]').textContent='Hidden apps ('+catalog.filter(function(a){return state.hiddenAppIds.indexOf(a.id)>=0;}).length+')';var query=searchTerm.toLowerCase();catalog.filter(function(item){return(state.showHidden||state.hiddenAppIds.indexOf(item.id)<0)&&(filter==='All'||M.detectCategory(item.name)===filter)&&(!query||item.name.toLowerCase().indexOf(query)>=0);}).forEach(function(item){var card=appCard(item,'apps');if(state.favouriteIds&&(state.favouriteIds||[]).indexOf(item.id)>=0)card.title='Pinned to Home';area.appendChild(card);});
     qa('.filter[data-filter]').forEach(function(b){b.classList.toggle('active',b.dataset.filter===filter);});q('#search-status').textContent=searchTerm?'Search: '+searchTerm:'';
     if(!area.children.length)area.appendChild(el('div','empty-placeholder','No matching apps. Clear the search, enable hidden apps or refresh the catalogue.'));}
@@ -431,11 +435,11 @@
     }
     previewingId=item.id;
     var gen=++previewGeneration;clearTimeout(previewTimer);stopVideoPreview();var area=q('#preview'),art=q('#preview-art');area.classList.remove('is-live');art.textContent='';art.className='preview-art';
-    q('#preview-title').textContent=itemName(item);q('#preview-meta').textContent=item.kind==='input'?item.port+' · '+(item.connected?'Connected':'Not connected'):'Last used '+timeLabel(item.id)+' · OK to open';q('#preview-indicator').hidden=true;
+    q('#preview-title').textContent=itemName(item);q('#preview-meta').textContent=item.kind==='input'?item.port+(item.pending?'':item.discoveryFailed?' · Status unavailable':' · '+(item.connected?'Connected':'Not connected')):'Last used '+timeLabel(item.id)+' · OK to open';q('#preview-indicator').hidden=true;
     if(item.kind==='input'){
       art.classList.add('preview-pc');art.appendChild(el('div','monitor-mock'));
       var caption=el('span','art-caption','');art.appendChild(caption);
-      if(!item.connected){caption.textContent='HDMI is disconnected';return;}
+      if(!item.connected){caption.textContent=item.pending?'':item.discoveryFailed?'Input status unavailable':'HDMI is disconnected';return;}
       if(state.previewMode==='off'||!P.isTV)return;
       var current=P.currentSource();
       if(state.autoPreviewCurrentOnly&&(!current||current.type!==item.raw.type||Number(current.number)!==Number(item.raw.number))){caption.textContent='';return;}
@@ -456,7 +460,7 @@
   function focusByAction(action,zone){if(!action)return null;return qa('#'+page+' .navitem').find(function(n){return n.dataset.action===action&&(!zone||n.dataset.zone===zone);})||qa('.masthead .navitem').find(function(n){return n.dataset.action===action;})||null;}
   function focusFirst(){var node;if(page==='home'){
       var recent=recentItems(),fav=favouriteItems(),id=M.defaultSelection(state.focusDefault,recent,inputList,fav,state.inputNames,state.pcPort);
-      node=state.focusDefault==='pc'&&previewItem&&previewItem.kind==='input'&&previewItem.connected?q('#preview-hit'):focusByItem(id);node=node||q('#recent-list .navitem')||q('#favourites .navitem')||q('#home .navitem');
+      node=state.focusDefault==='pc'&&previewItem&&previewItem.kind==='input'&&(previewItem.connected||previewItem.pending)?q('#preview-hit'):focusByItem(id);node=node||q('#recent-list .navitem')||q('#favourites .navitem')||q('#home .navitem');
     }else node=q('#'+page+' .navitem');if(node)setFocus(node);}
   function setFocus(node){if(!node||node.disabled||launching)return; if(selected===node)return; if(selected)selected.classList.remove('is-focused');selected=node;node.classList.add('is-focused');
     try{node.focus({preventScroll:true});}catch(e){node.focus();}
@@ -531,6 +535,8 @@
   function refreshView(name,itemId){showPage(name||page,itemId?{itemId:itemId}:null);}
   function activate(item){
     if(!item||launching)return;
+    if(item.kind==='input'&&item.pending){toast('Input discovery is still in progress');return;}
+    if(item.kind==='input'&&item.discoveryFailed){toast('Input status unavailable. Use Refresh catalogue in Settings.');return;}
     if(item.kind==='input'&&!item.connected){toast(itemName(item)+' is not connected');return;}
     if(!P.isTV){toast('App launching and HDMI switching require a Samsung TV');return;}
     var token=++launchGeneration;launching={id:item.id,kind:item.kind,accepted:false,started:Date.now()};
@@ -750,11 +756,11 @@ firstDataRender=false;if(action==='undo'){performUndo();return;}if(action==='ope
       // Retain previously cached favourites so a transient API failure does not erase Home.
       refreshInputs(gen,report);toast('App discovery failed; displaying cached information');
     });}
-  function refreshInputs(gen,report){P.listInputs(function(info){if(gen!==refreshGeneration)return;setInputs(M.sources(info));if(state.uiRevision!==1){if(!state.pcPort){var pc=inputList.find(function(i){return i.port==='HDMI 1';});if(pc)state.pcPort=pc.port;}state.uiRevision=1;save();}
+  function refreshInputs(gen,report){P.listInputs(function(info){if(gen!==refreshGeneration)return;inputDiscoveryStatus='ready';setInputs(M.sources(info));if(state.uiRevision!==1){if(!state.pcPort){var pc=inputList.find(function(i){return i.port==='HDMI 1';});if(pc)state.pcPort=pc.port;}state.uiRevision=1;save();}
       if(!P.isTV&&!state.recent.length){var pc=inputList.find(function(i){return i.connected;});if(pc)state.recent=M.recordRecent(state.recent,{id:pc.id,name:itemName(pc)},Date.now());
         ['YouTube','Apple TV','Netflix'].forEach(function(name,i){var app=matchApp(name);if(app)state.recent.push({id:app.id,name:app.name,at:Date.now()-(i+1)*3600000});});}
       refreshVisible();if(report)toast('App catalogue and inputs refreshed');
-    },function(err){if(gen!==refreshGeneration)return;diagnostics.status='Could not check HDMI inputs';diagnostics.error='HDMI: '+err;refreshVisible();if(report)toast('App catalogue updated; HDMI check failed');});}
+    },function(err){if(gen!==refreshGeneration)return;inputDiscoveryStatus='failed';diagnostics.status='Could not check HDMI inputs';diagnostics.error='HDMI: '+err;refreshVisible();if(report)toast('App catalogue updated; HDMI check failed');});}
   function initialCache(){var items;try{items=JSON.parse(storageGet(APP_CACHE)||'null');}catch(e){}
     if(Array.isArray(items))setCatalogue(M.catalogue(items,P.currentId()));if(state.favouriteIds===null&&catalog.length){state.favouriteIds=M.initialFavourites(catalog,state.favouriteOrderNames);save();}}
   function onClick(e){var target=e.target.closest('button');if(!target||modalOpen)return;if(target.dataset.action)doAction(target.dataset.action);}
@@ -811,7 +817,9 @@ firstDataRender=false;if(action==='undo'){performUndo();return;}if(action==='ope
     w.addEventListener('online',function(){updateNetwork();refreshWeather(true);});w.addEventListener('offline',updateNetwork);
     w.addEventListener('blur',function(){clearTimeout(enterTimer);enterDown=false;enterLong=false;});
     w.addEventListener('pagehide',function(){if(wallpaperManager)wallpaperManager.dispose();++returnSetup;returnMode.disable();if(unwatchInputs)unwatchInputs();if(unwatchApps)unwatchApps();P.leaveFullscreen().then(stopVideoPreview);});
-    initialCache();refreshData(false);showPage('home');maybeSetup();
+    initialCache();showPage('home');maybeSetup();
+    // Let the cached Home paint before invoking device discovery.
+    if(catalog.length)w.requestAnimationFrame(function(){setTimeout(function(){refreshData(false);},0);});else setTimeout(function(){refreshData(false);},0);
     if(w.LauncherRecovery&&w.LauncherRecovery.safe)setReturnPreference(false);
     else if(storageGet('cinematic-tv-return-enabled')==='1')configureReturn(true);
     if(w.LauncherRecovery)w.LauncherRecovery.ready();

@@ -1,3 +1,5 @@
+> Current candidate: [0.5.5 quieter startup presentation](TV-FEEDBACK-0.5.5.md). Earlier entries remain historical.
+
 > Current candidate: [0.5.4 source handoff, bounded return and quieter Home refresh](TV-FEEDBACK-0.5.4.md). Earlier version-specific counts and acceptance notes below are historical.
 
 > Current candidate: [0.5.0 navigation, compact Settings and wallpaper manager](TV-FEEDBACK-0.5.0.md). Earlier version-specific results below remain historical; the local delivery report distinguishes automated checks, SDK installation and physical observation.
