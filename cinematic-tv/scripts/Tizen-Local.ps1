@@ -175,7 +175,8 @@ try {
             if (Test-Path -LiteralPath $temporary) {
                 $cleanupDirectory = Get-Item -LiteralPath $temporary
                 $tempDirectory = Get-Item -LiteralPath ([IO.Path]::GetTempPath())
-                if ($cleanupDirectory.Parent.FullName -ne $tempDirectory.FullName -or
+                if ($cleanupDirectory.Parent.FullName.TrimEnd([IO.Path]::DirectorySeparatorChar) -ne
+                    $tempDirectory.FullName.TrimEnd([IO.Path]::DirectorySeparatorChar) -or
                     $cleanupDirectory.Name -notmatch '^CinematicTV-[0-9a-f]{32}$' -or
                     ($cleanupDirectory.Attributes -band [IO.FileAttributes]::ReparsePoint)) {
                     throw 'Refusing cleanup outside the generated package-build directory.'
